@@ -1,0 +1,80 @@
+
+--- Full-Maude interface to generate proof-term signature
+load ltlr-interface
+
+--- client-server model
+(mod CLIENT-SERVER is
+    protecting NAT .
+    sorts Oid Nat? Cnts Conf .
+    subsort Nat < Nat? .
+    subsort Cnts < Conf .
+
+    op nil : -> Nat? [ctor] .
+    ops a b c : -> Oid [ctor] .
+    op f : Oid Oid Nat -> Nat [ctor] .
+    op `{_`,_`} : Oid Nat -> Cnts [ctor] .
+
+    op _<-_ : Oid Cnts -> Conf [ctor] .
+    op `[_`] : Oid -> Conf [ctor] .
+    op `[_`,_`,_`,_`] : Oid Oid Nat Nat? -> Conf [ctor] .
+
+    op null : -> Conf [ctor] .
+    op __ : Conf Conf -> Conf [ctor assoc comm id: null] .
+
+    vars C S I : Oid .  vars N M : Nat .
+    var W : Nat? .  var CNT : Cnts . 
+
+    rl [req] : [C,S,N,nil] => [C,S,N,nil] (S <- {C,N}) 
+         [metadata "req ; just(C)"] .
+    rl [reply] : (S <- {C,N}) [S] => [S] (C <- {S,f(S,C,N)}) 
+         [metadata "fair(S,C)"] .
+    rl [rec] : (C <- {S,M}) [C,S,N,W] => [C,S,N,M] [metadata "fair(C)"] .
+    rl [dupl] : (I <- CNT) => (I <- CNT) (I <- CNT)  .
+    rl [loss] : I <- CNT => null  .
+
+--- test ops
+    op _##_ : Conf Conf -> Conf [ctor assoc] .
+    op t1 : Conf Nat -> Conf [ctor] .
+    op t2 : Cnts -> Cnts [ctor] .
+endm)
+
+(mod CLIENT-SERVER-CHECK is
+  inc CLIENT-SERVER .
+  pr SATISFACTION .
+
+  subsort Conf < State .
+
+  op init : -> State .
+  eq init = [a] [b,a,1,nil] [c,a,0,nil] . 
+
+  var CNT : Cnts .  vars C S I : Oid .  vars N : Nat . 
+
+  *** abstraction
+  eq (I <- CNT) (I <- CNT) = (I <- CNT) .
+  *** extra rules below added by coherence completion
+  rl [reply] : (S <-{C,N}) [S] => (S <-{C,N}) [S] (C <-{S,f(S,C,N)}) .
+endm)
+
+set verbose on .
+
+--- syntax error
+(mc in AT : 1 |= 1 .)
+(mc in NAT : asd |= 1 .)
+(mc in NAT : 1 |= asdg .)
+
+(mc init |= <> rec(b) .)
+
+(fmc init |= <> rec(b) under
+    (just : enabled(req(b)) => req(b)) ;
+    (just : enabled(reply(a,b)) => reply(a,b)) ;
+    (just : enabled(rec(b)) => rec(b))
+.)
+
+(fmc init |= <> rec(b) under
+    (just : enabled(req(b)) => req(b)) ;
+    (fair : enabled(reply(a,b)) => reply(a,b)) ;
+    (fair : enabled(rec(b)) => rec(b))
+.)
+
+(mc init |=f <> rec(b) .)
+

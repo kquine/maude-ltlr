@@ -1,0 +1,56 @@
+
+**********************************************
+*** LTLR model checker install instruction ***
+**********************************************
+
+The followings are the step-by-step instruction for adding LTLR 
+model checker module into the Core Maude 2.6 source. 
+We assume that LTLR files are in the directory LTLR and 
+the Maude source files are in the directory $MAUDE.
+
+1. Copy LTLR folder into "$MAUDE/src"
+2. Modify "$MAUDE/configuer.ac"
+    - add "src/qLtlr/Makefile" to the line 343 (in AC_CONFIG_FILES)
+3. Modify "Makefile.am" files
+    - $MAUDE/src/Makefile.am 
+    * add "qLtlr \" to the line 2 (in SUBDIRS)
+    - $MAUDE/src/Main/Makefile.am
+    * add "-I$(top_srcdir)/src/qLtlr \" to the line 35 (in maude_CPPFLAGS)
+    * add "../Ltlr/libqLtlr.a \" to the line 59 (in maude_LDADD)
+    - $MAUDE/src/Mixfix/Makefile.am
+    * add "-I$(top_srcdir)/src/qLtlr \" to the line 31 (in libmixfix_a_CPPFLAGS)
+4. Add the declaration for special symbols.
+    - $MAUDE/src/Mixfix/entry.cc
+        * add the following statements to the line 552 
+    (at the end of the function declaration "MixfixModlue::newFancySymbol")
+
+    case SymbolType::LTLR_FAIRCHECKER_SYMBOL:
+      return new LTLRFairnessCheckerSymbol(name, nrArgs);
+
+    - $MAUDE/src/Mixfix/mixfixModule.cc
+        * add the following includes 
+
+    #include "ltlrFairnessCheckerSymbol.hh"
+
+    - $MAUDE/src/Mixfix/specialSymbolTypes.cc
+        * add the following macro declarations to the last
+    
+MACRO(LTLRFairnessCheckerSymbol, SymbolType::LTLR_FAIRCHECKER_SYMBOL)
+
+    - $MAUDE/src/Mixfix/symbolType.hh
+        *  add the following to the line 77 (in "enum BasicTypes")
+
+    LTLR_FAIRCHECKER_SYMBOL,
+
+5. Run autoconf and automake again. Sometime you need to execute aclocal.
+
+6. Follow the instruction for Maude sourcecode installation.
+
+   (Note: You may need to modify $MAUDE/src/Mixfix/lexerAux.hh and $MAUDE/src/Mixfix/lexerAux.cc under certain compile options and architectures. The second argument type of getInput function declarations may be modified from int& to size_t&.)
+
+------
+
+For LTLR model checking, you also need ltlr-checker.maude. We also provide the automatic interface for proofterms ltlr-pattern.maude. You can get these files and examples from "http://www.cs.illinois.edu/~kbae4/tlr/". 
+
+If you have any question or comments, please contact Kyungmin Bae (kbae4@cs.uiuc.edu).
+

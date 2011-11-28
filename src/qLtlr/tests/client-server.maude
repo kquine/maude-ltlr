@@ -1,0 +1,130 @@
+load ltlr-checker
+
+mod CLIENT-SERVER is
+    protecting NAT .
+    sorts Oid Nat? Cnts Conf .
+    subsort Nat < Nat? .
+    subsort Cnts < Conf .
+
+    op nil : -> Nat? [ctor] .
+    ops a b c : -> Oid [ctor] .
+    op f : Oid Oid Nat -> Nat [ctor] .
+    op `{_`,_`} : Oid Nat -> Cnts [ctor] .
+
+    op _<-_ : Oid Cnts -> Conf [ctor] .
+    op `[_`] : Oid -> Conf [ctor] .
+    op `[_`,_`,_`,_`] : Oid Oid Nat Nat? -> Conf [ctor] .
+
+    op null : -> Conf [ctor] .
+    op __ : Conf Conf -> Conf [ctor assoc comm id: null] .
+
+    vars C S I : Oid .  vars N M : Nat .
+    var W : Nat? .  var CNT : Cnts . 
+
+    rl [req] : [C,S,N,nil] => [C,S,N,nil] (S <- {C,N}) .
+    rl [reply] : (S <- {C,N}) [S] => [S] (C <- {S,f(S,C,N)}) .
+    rl [rec] : (C <- {S,M}) [C,S,N,W] => [C,S,N,M] .
+    rl [dupl] : (I <- CNT) => (I <- CNT) (I <- CNT)  .
+    rl [loss] : I <- CNT => null  .
+endm
+
+mod CLIENT-SERVER-CHECK is
+    protecting CLIENT-SERVER .
+    inc LTLR-MODEL-CHECKER .
+    inc SPATIAL-ACTION-PATTERN .
+
+    subsort Conf < State .
+
+****************************************
+*** The support signature declaration
+****************************************
+    sorts Context$Conf .
+    subsorts Conf < Context$Conf < StateContext .
+    op __ : Context$Conf Conf -> Context$Conf [ditto] .
+    op __ : Conf Context$Conf -> Context$Conf [ditto] .
+
+    op [] : -> Context$Conf [ctor] .	--- defined for each sort of rules' rhs
+    op _\_ : Qid Oid -> StateAssignment [ctor prec 63] .    --- defined only for used symbol
+
+    op modelCheckParamFair : State Formula FairnessSet FairFlag ~> ModelCheckResult
+	[special (id-hook LTLRFairnessCheckerSymbol
+              op-hook assignmentSymbol (_\_ : Qid Oid ~> StateAssignment)
+              op-hook holeSymbol       ([] : ~> Context$Conf))] .
+
+*********************************
+*** Predicate
+*********************************
+
+    op enabled : Action -> Prop .
+
+    op init : -> State .
+    op Just : Action -> Formula .
+    op Fair : Action -> Formula .
+    op FairnessAssumptions : -> Formula .
+
+    ops req rec : Oid -> Action .
+    ops reply : Oid Oid -> Action .
+    eq req(C) = {'req : 'C \ C} .
+    eq rec(C) = {'rec : 'C \ C} .
+    eq reply(S, C) = {'reply : 'S \ S ; 'C \ C} .
+
+    var X : Conf .  vars A B : Action . var CNT : Cnts . 
+    vars C S I : Oid .  vars M N : Nat . var W : Nat? .
+
+    eq X [C, S, N, nil] |= enabled({'req : 'C \ C}) = true .
+
+    eq X (C <- {S,M}) [C,S,N,W] |= enabled({'rec : 'C \ C}) = true .
+
+    eq X (S <- {C, N}) [S] |= enabled({'reply : 'S \ S ; 'C \ C}) = true .
+
+    eq Just(A) = (<> [] enabled(A)) -> ([] <> A) .
+    eq Fair(A) = ([] <> enabled(A)) -> ([] <> A) .
+    eq FairnessAssumptions = 
+    Just(req(b)) /\ Fair(reply(a, b)) /\ Fair(rec(b)) .
+
+    eq init = [a] [b,a,1,nil] [c,a,0,nil] . 
+
+    *** abstraction
+    eq (I <- CNT) (I <- CNT) = (I <- CNT) .
+    *** extra rules below added by coherence completion
+    rl [reply] : (S <-{C,N}) [S] => (S <-{C,N}) [S] (C <-{S,f(S,C,N)}) .
+endm
+
+set verbose on .
+
+--- true
+red modelCheck(init,FairnessAssumptions -> <> rec(b)) .
+
+--- false
+red modelCheck(init,FairnessAssumptions) .
+
+*** weak fairness test ***
+
+--- false
+red modelCheck(init, (Fair(reply(a,b)) /\ Fair(rec(b))) -> <> rec(b)) .
+
+--- true
+red modelCheckFair(init, (Fair(reply(a,b)) /\ Fair(rec(b))) -> <> rec(b),
+    (just : enabled(req(b)) => req(b))
+) .
+
+*** strong fairness test ***
+
+--- true
+red modelCheckFair(init, <> rec(b),
+    (just : enabled(req(b)) => req(b)) ;
+    (fair : enabled(reply(a,b)) => reply(a,b)) ;
+    (fair : enabled(rec(b)) => rec(b)) 
+) .
+
+--- false
+red modelCheckFair(init, <> rec(b),
+    (fair : enabled(reply(a,b)) => reply(a,b)) ;
+    (fair : enabled(rec(b)) => rec(b))
+) .
+
+--- true
+red modelCheckFair(init, Just(req(b)) -> <> rec(b),
+    (fair : enabled(reply(a,b)) => reply(a,b)) ;
+    (fair : enabled(rec(b)) => rec(b))
+) .

@@ -1,0 +1,154 @@
+
+fmod MEMORY is 
+    inc INT + QID . 
+    sorts Memory Bool? Int? .
+    subsorts Bool < Bool? . subsorts Int < Int? .
+    op null : -> Int? [ctor] .
+    op none : -> Memory [ctor] .
+    op __ : Memory Memory -> Memory [ctor assoc comm id: none] .
+    op `[_`,_`] : Qid Int? -> Memory [ctor] .
+    op _in_ : Qid Memory -> Bool? .
+    var Q : Qid . var M : Memory . var N? : Int? .
+    eq null + N? = null .
+    eq null * N? = null .
+    eq Q in [Q,N?] M = true .
+endfm
+
+fmod EXPRESSION is 
+    inc MEMORY .
+    sort Expression .
+    subsorts Qid Int? < Expression .
+    op _+'_ : Expression Expression -> Expression [ctor] .
+    op _-'_ : Expression Expression -> Expression [ctor] .
+    op _*'_ : Expression Expression -> Expression [ctor] .
+    op eval : Expression Memory -> Int? .
+    var Q : Qid .
+    var M : Memory .
+    vars N N' : Int .
+    var N? : Int? .
+    vars E E' : Expression .
+    eq eval(N?, M) = N? .
+    eq eval(Q, [Q, N?] M) = N? .
+    ceq eval(Q,M) = null if Q in M =/= true .
+    eq eval(E +' E', M) = eval(E,M) + eval(E',M) .
+    eq eval(E -' E', M) = eval(E,M) - eval(E',M) .
+    eq eval(E *' E', M) = eval(E,M) * eval(E',M) .
+endfm
+
+fmod TESTS is 
+    inc EXPRESSION .
+    sort Test .
+    op _=_ : Expression Expression -> Test [ctor] . 
+    op _!=_ : Expression Expression -> Test [ctor] . 
+    op _<'_ : Expression Expression -> Test [ctor] .
+    op eval : Test Memory -> Bool .
+    var Q : Qid .
+    var M : Memory .
+    vars N? N'? : Int? .
+    vars E E' : Expression .
+    eq eval(E = E', M) = eval(E, M) == eval (E', M) .
+    eq eval(E != E', M) = eval(E, M) =/= eval (E', M) .
+    eq eval(E <' E', M) = eval(E, M) < eval (E', M) .
+endfm
+
+fmod SEQUENTIAL is inc TESTS + EXPRESSION .
+    sorts UserStatement LoopingUserStatement Program .
+    subsort LoopingUserStatement < UserStatement < Program .
+    op skip : -> Program .
+    op _;_ : Program Program -> Program [prec 61 assoc id: skip] .
+    op _:=_ : Qid Expression -> Program .  
+    op if_then_fi : Test Program -> Program .
+    op while_do_od : Test Program -> Program .
+    op repeat_forever : Program -> Program .
+
+    op choose_|_ : Program Program -> Program .	--- nondeterministic choice
+    op request_ : Qid -> Program .		--- acquire lock
+    op release_ : Qid -> Program .		--- release lock
+endfm
+
+mod PARALLEL is inc SEQUENTIAL + TESTS .
+    sorts Pid Process Soup MachineState .
+    subsort Process < Soup .
+    subsort Int < Pid .
+    op `[_`,_`] : Pid Program -> Process [ctor] .
+    op empty : -> Soup [ctor] .
+    op _|_ : Soup Soup -> Soup [ctor prec 61 assoc comm id: empty] .
+    op `{_`,_`} : Soup Memory -> MachineState [ctor] .
+
+    vars P P' R : Program .
+    var S : Soup .
+    var U : UserStatement .
+    var L : LoopingUserStatement .
+    vars I J : Pid .
+    var M : Memory .
+    var Q : Qid .
+    vars N? X? : Int? .
+    var T : Test .
+    var E : Expression .
+
+    --- the definition of execution semantics
+    rl [user] : {[I, U ; R] | S, M} => {[I, R] | S, M} .
+    rl [loop] : {[I, L ; R] | S, M} => {[I, L ; R] | S, M} .
+    rl [assign] : {[I, (Q := E) ; R] | S, [Q, X?] M} 
+	       => {[I, R] | S, [Q,eval(E,[Q, X?] M)] M} .
+    crl [assign] : {[I, (Q := E) ; R] | S, M} 
+		=> {[I, R] | S, [Q,eval(E,M)] M} if Q in M =/= true .
+    rl [if] : {[I, if T then P fi ; R] | S, M} 
+	   => {[I, if eval(T, M) then P else skip fi ; R] | S, M} .
+    rl [while] : {[I, while T do P od ; R] | S, M} 
+      => {[I, if eval(T, M) then (P ; while T do P od) else skip fi ; R] | S, M} .
+    rl [repeat] : {[I, repeat P forever ; R] | S, M} 
+               => {[I, P ; repeat P forever ; R] | S, M} .
+    rl [choose] : {[I, choose P | P' ; R] | S, M} => {[I, P ; R] | S, M} .
+    rl [choose] : {[I, choose P | P' ; R] | S, M} => {[I, P' ; R] | S, M} .
+
+    op <_,_> : Pid Memory -> Memory [ctor] .		--- frozen cell
+    rl [req] : {[I, request Q ; R] | S, [Q,X?] M} => {[I, R] | S, < I, [Q,X?] > M} .
+    rl [rel] : {[I, release Q ; R] | S, < I, [Q,X?] > M} => {[I, R] | S, [Q,X?] M} .
+endm
+
+load ltlr-checker
+
+mod PARALLEL-CHECK is 
+    protecting PARALLEL .
+    inc LTLR-MODEL-CHECKER .
+    inc SPATIAL-ACTION-PATTERN .
+
+    subsort MachineState < State .
+
+    var U : UserStatement .  var L : LoopingUserStatement .
+    var Q : Qid .  vars X? : Int? .  var T : Test .  var E : Expression .
+    var M : Memory .  vars P P' R : Program .  var S : Soup .  vars I : Pid .
+    var SC : StateContext . var RN : RuleName . var SS SS' : StateSubstitution .
+
+*** support signatures. 
+    sorts Context$MachineState .
+    subsorts MachineState < Context$MachineState < StateContext .
+    op _\_ : Qid Pid -> StateAssignment [ctor] .
+    op [] : -> Context$MachineState [ctor] .
+    op modelCheckParamFair : State Formula FairnessSet FairFlag ~> ModelCheckResult
+      [special (id-hook LTLRFairnessCheckerSymbol
+	      op-hook holeSymbol       ([] : ~> Context$MachineState)
+              op-hook assignmentSymbol (_\_ : Qid Pid ~> StateAssignment)
+    )] .
+
+*** predicates
+    op enabled : Pid -> Prop .
+    eq {[I, U ; R] | S, M} |= enabled(I) = true .
+    eq {[I, L ; R] | S, M} |= enabled(I) = true .
+    eq {[I, (Q := E) ; R] | S, [Q, X?] M} |= enabled(I) = true .
+    eq {[I, (Q := E) ; R] | S, M} |= enabled(I) = true .
+    eq {[I, if T then P fi ; R] | S, M} |= enabled(I) = true .
+    eq {[I, while T do P od ; R] | S, M} |= enabled(I) = true .
+    eq {[I, repeat P forever ; R] | S, M} |= enabled(I) = true .
+    eq {[I, choose P | P' ; R] | S, M} |= enabled(I) = true .
+    eq {[I, choose P | P' ; R] | S, M} |= enabled(I) = true .
+    eq {[I, request Q ; R] | S, [Q,X?] M} |= enabled(I) = true .
+    eq {[I, release Q ; R] | S, < I, [Q,X?] > M} |= enabled(I) = true .
+
+    ops in-crit in-rem : Pid -> Prop .
+
+    op exec : Pid -> Action .
+    eq {SC | RN : 'I \ I ; SS'} |= exec(I) = true .
+endm
+

@@ -1,0 +1,75 @@
+
+load ltlr-interface
+
+(mod PHILO is pr NAT .
+
+  sorts Philo Status .
+  op ph : Nat Status Nat -> Philo [ctor] .
+  ops think hungry : -> Status [ctor] .
+
+  sort Chopstick .
+  op stk : Nat -> Chopstick [ctor] .
+
+  sort Conf .
+  subsorts Philo Chopstick < Conf .
+  op none : -> Conf [ctor] .
+  op _;_ : Conf Conf -> Conf [ctor comm assoc id: none] .
+
+  sort Top .
+  op <_`,_`,_> : Nat Nat Conf -> Top [ctor] .
+
+  vars P Q N C : Nat .  var I J : NzNat . var CF : Conf .
+
+--- equations
+  ops left collatz : Nat -> Nat .
+  op right : Nat Nat -> Nat .
+
+  eq left(I) = I .
+  eq right(I, N) = s(I rem N) .
+  eq collatz(P) = if P rem 2 == 0 then P quo 2 else 3 * P + 1 fi .
+
+--- rules
+  rl [wake]: ph(I, think, 0) => ph(I, hungry, 0) [metadata "just(I)"] . 
+
+  crl [grab]: < P, N, ph(I, hungry, C) ; stk(J) ; CF >
+           => < P, N, ph(I, hungry, C + 1) ; CF > 
+   if J == left(I) or J == right(I, N) [metadata "fair(I)"] .
+
+  rl [stop]: < P, N, ph(I, hungry, 2) ; CF > 
+          => < P, N, ph(I, think, 0) ; stk(left(I)) ; stk(right(I,N)) ; CF > .
+
+  rl [solve]: < s s P, N, ph(I, think, 0) ; CF >
+	  =>  < collatz(s s P), N, ph(I, think, 0) ; CF > .
+
+  crl [join]: < P, N, ph(N, think, 0) ; CF > 
+           => < P, s N, ph(N, think, 0) ; CF ; ph(s N, think, 0) ; stk(s N) > 
+   if P rem N == 0 .
+
+  rl [leave]: < P, s s s N, CF ; ph(s s s N, think, 0) ; stk(s s s N) > 
+           => < P, s s N, CF > .
+
+  --- initial state
+endm)
+
+(mod PHILO-CHECK is
+  inc PHILO .
+  pr SATISFACTION .
+  pr LTL .
+
+  vars P Q N C : Nat .  var I J : NzNat . var CF : Conf .
+
+  subsort Top < State .
+  op init : Nat -> Top .
+  eq init(P) = < P, 2, ph(1, think, 0) ; stk(1) ; ph(2, think, 0) ; stk(2) > .
+
+  op eating : Nat -> Prop [ctor] .
+  eq < P, N, ph(I, hungry, 2) ; CF > |= eating(I) = true .
+endm)
+
+set verbose on .
+
+(mc in PHILO-CHECK : init(5) |= [] ~ deadlock .)
+
+(mc init(6) |=f [] ~ deadlock -> <> eating(1) .)
+(mc init(12) |=f [] ~ deadlock -> <> eating(1) .)
+

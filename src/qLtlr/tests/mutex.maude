@@ -1,0 +1,83 @@
+
+load parallel.maude
+
+mod MUTEX is inc PARALLEL .
+  subsort Int < Pid .
+
+  ops pre crit : -> UserStatement .
+  op crit : -> LoopingUserStatement .
+
+  op process : Nat -> Process .
+  op makeProcess : Nat -> Soup .
+  op initial : Nat -> MachineState .
+
+  var I N : Nat . 
+
+  eq process(I) 
+   = [I, repeat pre ; request 'x ; crit ; release 'x forever] .
+
+  eq makeProcess(s I) = process(s I) | makeProcess(I) .
+  eq makeProcess(0) = empty .
+
+  eq initial(N) = { makeProcess(N), ['x,1] } .
+endm
+
+
+mod MUTEX-CHECK is 
+  pr MUTEX .
+  inc PARALLEL-CHECK .
+
+  var I : Pid .  var Q : Qid . var M : Memory .  
+  vars P R : Program .  var S : Soup .  var N : Nat .
+
+--- state predicate
+  ops in-crit release : Pid -> Prop .
+  eq {[I, crit ; R] | S, M} |= in-crit(I) = true .
+  eq {[I, release Q ; R] | S, M} |= release(I) = true .
+
+--- realized fair
+  rl [test1]: realizedProps({[I, crit ; R] | S, M}, nil)
+           => realizedProps({[I, crit ; R] | S, M}, in-crit(I) ) .
+  rl [test1]: realizedProps({[I, release Q ; R] | S, M}, nil)
+           => realizedProps({[I, release Q ; R] | S, M}, release(I) ) .
+  eq realizedProps(S:State, in-crit(I)) = realFair(fair : in-crit(I) => release(I)) .
+  eq realizedProps(S:State, release(I)) = realFair(fair : in-crit(I) => release(I)) .
+
+  crl [test2]: realizedProps({[I, R] | S, M}, nil)
+            => realizedProps({[I, R] | S, M}, enabled(I) ) 
+   if {[I, R] | S, M} |= enabled(I) .
+  eq realizedProps(S:State, enabled(I)) = realFair(fair : enabled(I) => exec(I)) .
+
+
+--- NOTE: (fair : enabled(s N) => exec(s N)) is required since
+--- <>[] enabled(N) may not hold because of locks
+
+  op fairFormula : Nat -> FairnessSet .
+  eq fairFormula(s N) = 
+    (fair : in-crit(s N) => release(s N)) ; 
+    (fair : enabled(s N) => exec(s N)) ; 
+    fairFormula(N) . 
+  eq fairFormula(0) = noFairness . 
+
+endm
+
+set verbose on .
+
+red modelCheckParamFair(initial(7), [](enabled(1) -> <> in-crit(1)),
+    noFairness, flag(stateParam, fairParam)) .
+red modelCheckParamFair(initial(8), [](enabled(1) -> <> in-crit(1)),
+    noFairness, flag(stateParam, fairParam)) .
+red modelCheckParamFair(initial(9), [](enabled(1) -> <> in-crit(1)),
+    noFairness, flag(stateParam, fairParam)) .
+red modelCheckParamFair(initial(10), [](enabled(1) -> <> in-crit(1)),
+    noFairness, flag(stateParam, fairParam)) .
+
+
+red modelCheckFair(initial(7), [](enabled(1) -> <> in-crit(1)),
+    fairFormula(7)) .
+red modelCheckFair(initial(8), [](enabled(1) -> <> in-crit(1)),
+    fairFormula(8)) .
+red modelCheckFair(initial(9), [](enabled(1) -> <> in-crit(1)),
+    fairFormula(9)) .
+red modelCheckFair(initial(10), [](enabled(1) -> <> in-crit(1)),
+    fairFormula(10)) .

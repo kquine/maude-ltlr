@@ -1,0 +1,273 @@
+
+****************************
+*** Basic Data Structure ***
+****************************
+
+fmod NAT-MAP{Y :: TRIV} is 
+  protecting MAP{Nat,Y} * (op  _|->_ to ([_,_]) , op (_,_) to _;_) .
+  protecting INT .
+
+  vars I J K : Nat .
+  var M M' :  Map{Nat,Y} .
+  var X : Y$Elt .
+
+  op 1st-undef : Map{Nat,Y} -> Nat .            *** first index for which map undefined
+  op 1st-undef-aux : Map{Nat,Y} Nat -> Nat .            
+  eq 1st-undef(M) = 1st-undef-aux(M,0) .
+  eq 1st-undef-aux((M ; [I,X]),I) = if $hasMapping(M,I) 
+                                          then I else 1st-undef-aux((M),s(I)) fi .
+  eq 1st-undef-aux(M,I) = I [owise] .
+
+  op max-index : Map{Nat,Y} -> Int .            *** biggest index for which map defined
+  eq max-index(empty) = -1 .
+  eq max-index(M ; [I,X]) = max(I,max-index(M)) .
+
+
+  op _|_ :  Map{Nat,Y} Nat ->  Map{Nat,Y} .  *** restriction to indices smaller than 2nd argument
+  ceq (M ; [I,X]) | J = M | J if J <= I .
+  eq M | J = M [owise] .
+
+  op _<=_ :  Map{Nat,Y} Map{Nat,Y} -> Bool .  *** map containment
+  eq M <= M ; M' = true .
+  eq M <= M' = false [owise] .
+
+  op _in_ : Entry{Nat,Y} Map{Nat,Y} -> Bool .  *** membership in a map 
+  eq [I,X] in [I,X] ; M = true .
+  eq [I,X] in  M = false [owise] .
+endfm
+
+fmod NAT-QID-MAP is protecting NAT-MAP{Qid} . 
+  op p : Nat -> NzNat .
+  vars N M : Nat .
+  eq p(s(N)) = N .
+endfm
+
+view Entry from TRIV to NAT-QID-MAP is sort Elt to Entry{Nat,Qid} . endv
+
+fmod NAT-QID-MAP&LIST is protecting LIST{Entry} .
+  op _[_:_] : Map{Nat,Qid} Nat Nat -> List{Entry} . *** extracts from a map a list between two indices
+  vars I J K : Nat .
+  var M :  Map{Nat,Qid} .
+  var Q : Qid .
+  ceq M[I : J] = nil if I > J .
+  ceq (M ; [I,Q]) [I : J] =  if $hasMapping(M,I) then (M ; [I,Q]) [s(I) : J]
+                                                else [I,Q] (M[s(I) : J]) fi if  I <= J .  
+  eq  M[I : J] = M[s(I) : J] [owise] .
+
+  op _<_:_> : Map{Nat,Qid} Nat Nat -> Map{Nat,Qid} . *** extracts a submap between two indices
+  ceq M < I : J > = empty if I > J .
+  ceq (M ; [I,Q]) < I : J > =  if $hasMapping(M,I) then (M ; [I,Q]) < s(I) : J >
+                                                else [I,Q] ; (M < s(I) : J >) fi if  I <= J .  
+  eq  M < I : J > = M < s(I) : J > [owise] .
+endfm
+
+****************************
+*** Sliding Window Model ***
+****************************
+
+mod SLIDING-WINDOW is 
+  protecting NAT-QID-MAP&LIST .  
+  protecting INT .
+  sorts Pid NodeQState GlobalState .
+  op [_,_,_,_,_,_,_,_] : Pid Nat Nat NzNat NzNat Map{Nat,Qid} Map{Nat,Qid} List{Entry} -> NodeQState [ctor] .
+  op _&_ : NodeQState NodeQState -> GlobalState [comm ctor] .
+
+  vars P P' : Pid .  var Q : Qid .
+  vars I NR NR' NA NA' : Nat .  vars B B' : NzNat .
+  vars M1 M2 M1' M2' OM : Map{Nat,Qid} .
+  vars F F' L G : List{Entry} .
+
+  crl [send] : [P,NR,NA,B,B',M1,M2,F] & [P',NR',NA',B',B,M1',M2',F'] 
+            => [P,NR,NA,B,B',M1,M2,F] & [P',NR',NA',B',B,M1',M2',F'[I,Q]] 
+   if NR + B > NA /\ [I,Q] ; OM := M1 < NA : p(NR + B)> .
+
+
+  rl [rec] : [P,NR,NA,B,B',M1,M2,[I,Q]F] 
+       => if $hasMapping(M2,I) then
+             [P,NR,NA,B,B',M1,M2,F] 
+          else
+             [P,1st-undef(M2 ;[I,Q]),max(NA,(I - B')+ 1),B,B',M1,M2 ;[I,Q],F] 
+          fi .
+
+  rl [loss] : [P,NR,NA,B,B',M1,M2,L [I,Q] G] => [P,NR,NA,B,B',M1,M2,L G] .
+endm
+
+
+************************
+*** Abstracted Model ***
+************************
+
+mod SLIDING-WINDOW-ABSTRACTION is 
+  protecting NAT-QID-MAP&LIST .  
+  protecting INT .
+
+  sorts Pid NodeQState GlobalState .
+  *** The fifo queues are now abstracted into bags, implicitly adding a commutativity equation,
+  op [_,_,_,_,_,_,_,_] : Pid Nat Nat NzNat NzNat Map{Nat,Qid} Map{Nat,Qid} Map{Nat,Qid} -> NodeQState [ctor] .
+
+  op _&_ : NodeQState NodeQState -> GlobalState [comm ctor] .
+
+  vars P P' : Pid .  var Q : Qid .
+  vars I NR NR' NA NA' : Nat .  vars B B' : NzNat .
+  vars M1 M2 M1' M2' OM F F' L G : Map{Nat,Qid} .
+
+*** Furthermore, duplicated messages in transit are removed by the following abstraction equation:
+  eq  [P,NR,NA,B,B',M1,M2,L ; [I,Q] ; [I,Q]] = [P,NR,NA,B,B',M1,M2,L ; [I,Q]] .
+
+  crl [send] : [P,NR,NA,B,B',M1,M2,F] & [P',NR',NA',B',B,M1',M2',F'] 
+            => [P,NR,NA,B,B',M1,M2,F] & [P',NR',NA',B',B,M1',M2',F' ; [I,Q]] 
+   if NR + B > NA /\ [I,Q] ; OM := M1 < NA : p(NR + B)> .
+   
+
+  rl [rec] : [P,NR,NA,B,B',M1,M2,[I,Q] ; F] 
+       => if $hasMapping(M2,I) then
+             [P,NR,NA,B,B',M1,M2,F] 
+          else
+             [P,1st-undef(M2 ;[I,Q]),max(NA,(I - B')+ 1),B,B',M1,M2 ;[I,Q],F] 
+          fi .
+
+
+  rl [loss] : [P,NR,NA,B,B',M1,M2,L ; [I,Q]] => [P,NR,NA,B,B',M1,M2,L] .
+
+*** New rules added for coherence reasons.
+  rl [rec] : [P,NR,NA,B,B',M1,M2,[I,Q] ; F] 
+       => if $hasMapping(M2,I) then
+             [P,NR,NA,B,B',M1,M2,[I,Q] ; F] 
+          else
+             [P,1st-undef(M2 ;[I,Q]),max(NA,(I - B')+ 1),B,B',M1,M2 ;[I,Q],F]
+          fi .
+
+  rl [loss] : [P,NR,NA,B,B',M1,M2,L ; [I,Q]] => [P,NR,NA,B,B',M1,M2,L ; [I,Q]] .
+endm
+
+load ltlr-checker
+---load model-checker
+
+*********************************
+*** Propositions for original ***
+*********************************
+
+mod SLIDING-WINDOW-PROPS is 
+  protecting SLIDING-WINDOW .  
+  including SATISFACTION .
+  subsort GlobalState < State .
+  op NR-correct : -> Prop .
+  op NR'-correct : -> Prop .
+  op NR>=NA' : -> Prop .
+  op NR'>=NA : -> Prop .
+  op left-rec-correct : -> Prop .
+  op right-rec-correct : -> Prop .  
+  op wrong-data-in-left-fifo : -> Prop .
+  op wrong-data-in-right-fifo : -> Prop .
+  op successful-transmission : -> Prop .
+  op in-left-fifo : Nat Qid -> Prop .
+  op in-right-fifo : Nat Qid -> Prop .
+  op in-left-rec : Nat Qid -> Prop .
+  op in-right-rec : Nat Qid -> Prop .
+
+  vars P P' : Pid .  var Q : Qid .
+  vars I NR NR' NA NA' : Nat .  vars B B' : NzNat .
+  vars M1 M2 M1' M2' M N : Map{Nat,Qid} .
+  vars F F' L G : List{Entry} .
+
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |= NR-correct = (NR == 1st-undef(M2)) .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |= NR'-correct = (NR' == 1st-undef(M2')) .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |= NR>=NA' = (NR >= NA') .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |= NR'>=NA = (NR' >= NA) .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |= left-rec-correct = 
+                                         (M2 <= M1') and (NA > max-index(M2) - B') .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |= right-rec-correct = 
+                                         (M2' <= M1) and (NA' > max-index(M2') - B) .
+  ceq [P,NR,NA,B,B',M1,M2,L [I,Q] G]&[P',NR',NA',B',B,M1',M2',F'] |=  wrong-data-in-left-fifo = true
+                                          if (([I,Q] in M1' == false) or (I >= NR' + B')) .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |=  wrong-data-in-left-fifo = false [owise] .
+
+  ceq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',L [I,Q] G] |=  wrong-data-in-right-fifo = true
+                                          if (([I,Q] in M1 == false) or (I >= NR + B)) .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |=  wrong-data-in-right-fifo = false [owise] .
+  eq [P,NR,NA,B,B',M1,M1',F]&[P',NR',NA',B',B,M1',M1,F'] |=  successful-transmission = true .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |=  successful-transmission = false [owise] .
+  eq [P,NR,NA,B,B',M1,M2,L [I,Q] G]&[P',NR',NA',B',B,M1',M2',F'] |=  in-left-fifo(I,Q) = true .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |=  in-left-fifo(I,Q) = false [owise] .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',L [I,Q] G] |=  in-right-fifo(I,Q) = true .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |=  in-right-fifo(I,Q) = false [owise] .
+  eq [P,NR,NA,B,B',M1,M ; [I,Q] ; N,F]&[P',NR',NA',B',B,M1',M2',F'] |=  in-left-rec(I,Q) = true .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |=  in-left-rec(I,Q) = false [owise] .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M ; [I,Q] ; N,F'] |=  in-right-rec(I,Q) = true .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |=  in-right-rec(I,Q) = false [owise] .
+endm
+
+************************************
+*** Propositions for abstraction ***
+************************************
+
+mod SLIDING-WINDOW-ABSTRACTION-PROPS is 
+  protecting SLIDING-WINDOW-ABSTRACTION .  
+  including SATISFACTION .
+  subsort GlobalState < State .
+  op NR-correct : -> Prop .
+  op NR'-correct : -> Prop .
+  op NR>=NA' : -> Prop .
+  op NR'>=NA : -> Prop .
+  op left-rec-correct : -> Prop .
+  op right-rec-correct : -> Prop .  
+  op wrong-data-in-left-fifo : -> Prop .   *** not a fifo anymore, but name kept
+  op wrong-data-in-right-fifo : -> Prop .  *** not a fifo anymore, but name kept
+  op successful-transmission : -> Prop .
+  op in-left-fifo : Nat Qid -> Prop .     *** not a fifo anymore, but name kept
+  op in-right-fifo : Nat Qid -> Prop .    *** not a fifo anymore, but name kept
+  op in-left-rec : Nat Qid -> Prop .
+  op in-right-rec : Nat Qid -> Prop .
+
+  vars P P' : Pid .  var Q : Qid .
+  vars I NR NR' NA NA' : Nat .  vars B B' : NzNat .
+  vars M1 M2 M1' M2' OM M N F F' L G : Map{Nat,Qid} .
+
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |= NR-correct = (NR == 1st-undef(M2)) .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |= NR'-correct = (NR' == 1st-undef(M2')) .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |= NR>=NA' = (NR >= NA') .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |= NR'>=NA = (NR' >= NA) .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |= left-rec-correct = 
+                                         (M2 <= M1') and (NA > max-index(M2) - B') .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |= right-rec-correct = 
+                                         (M2' <= M1) and (NA' > max-index(M2') - B) .
+  ceq [P,NR,NA,B,B',M1,M2,L ; [I,Q]]&[P',NR',NA',B',B,M1',M2',F'] |=  wrong-data-in-left-fifo = true
+                                          if (([I,Q] in M1' == false) or (I >= NR' + B')) .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |=  wrong-data-in-left-fifo = false [owise] .
+
+  ceq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',L ; [I,Q]] |=  wrong-data-in-right-fifo = true
+                                          if (([I,Q] in M1 == false) or (I >= NR + B)) .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |=  wrong-data-in-right-fifo = false [owise] .
+  eq [P,NR,NA,B,B',M1,M1',F]&[P',NR',NA',B',B,M1',M1,F'] |=  successful-transmission = true .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |=  successful-transmission = false [owise] .
+  eq [P,NR,NA,B,B',M1,M2,L ; [I,Q]]&[P',NR',NA',B',B,M1',M2',F'] |=  in-left-fifo(I,Q) = true .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |=  in-left-fifo(I,Q) = false [owise] .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',L ; [I,Q]] |=  in-right-fifo(I,Q) = true .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |=  in-right-fifo(I,Q) = false [owise] .
+  eq [P,NR,NA,B,B',M1,M ; [I,Q] ; N,F]&[P',NR',NA',B',B,M1',M2',F'] |=  in-left-rec(I,Q) = true .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |=  in-left-rec(I,Q) = false [owise] .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M ; [I,Q] ; N,F'] |=  in-right-rec(I,Q) = true .
+  eq [P,NR,NA,B,B',M1,M2,F]&[P',NR',NA',B',B,M1',M2',F'] |=  in-right-rec(I,Q) = false [owise] .
+endm
+
+set verbose on .
+
+mod MODEL-CHECK-OLD-ABLSTRACTION is
+  protecting SLIDING-WINDOW-ABSTRACTION-PROPS .
+  including MODEL-CHECKER .
+  including LTL-SIMPLIFIER .
+  op initial : -> GlobalState .
+  ops p q : -> Pid .
+  eq initial = 
+      [p,0,0,1,1,[0,'a] ; [1,'b] ; [2,'c] ; [3,'d],empty,empty]&
+      [q,0,0,1,1,[0,'h] ; [1,'i] ; [2,'j] ; [3,'k],empty,empty] .
+endm
+
+---set show gc on .
+
+red modelCheck(initial, [] (NR-correct /\ NR'-correct /\ NR>=NA' /\ NR'>=NA /\ left-rec-correct /\
+    right-rec-correct /\ (~ wrong-data-in-left-fifo) /\ (~ wrong-data-in-left-fifo))) .
+
+
+q
+

@@ -1,0 +1,154 @@
+
+*** LTLR model checking example for BRP 
+*** Author: Kyungmin Bae <kbae4@cs.uiuc.edu>
+
+*** The protocol description is from the following paper
+***  P. Abdulla, L. Annichini and A. Bouajjani, Symbolic verification of lossy channel systems: Application to the bounded retransmission protocol, In: TACAS'99, LNCS 1579, Springer (1999) 208-222
+
+
+--- load LTLR model checker
+load ltlr-checker
+
+--- Data description
+--- Each 
+fmod DATA is 
+  sorts Sender Receiver . 
+  sorts Msg MsgL . 
+  subsort Msg < MsgL .
+
+  --- the sender's status
+  --- snd(m) : the sender is sending a msg m
+  --- acc(m) : the sender gets an acknowledgement of the acceptance of a msg m
+  --- set(m) : the sender is about to send a msg m
+  op idle : -> Sender [ctor] .
+  ops set snd acc : Msg -> Sender [ctor] .
+
+  --- the receiver's status
+  --- rec(m) : the receiver gets a message m
+  op wait : -> Receiver [ctor] .
+  op rec : Msg -> Receiver [ctor] .
+
+  --- messages.
+  --- f: the first datum, l: the last datum, 0/1: the alternating bit
+  ops 0 1 f l : -> Msg [ctor] . 
+
+  --- list of messages
+  op nil : -> MsgL [ctor] . 
+  op _;_ : MsgL MsgL -> MsgL [ctor assoc id: nil] .
+endfm
+
+mod BRP is
+  protecting DATA .
+
+  --- state representation
+  sort Conf .
+  op <_,_,_,_,_,_> : Sender Bool MsgL MsgL Bool Receiver -> Conf [ctor] . 
+
+  op initial : -> Conf .
+  eq initial = < idle, false, nil, nil, false, wait > .
+
+  var S : Sender .  var R : Receiver . 
+  var M M' : Msg .  vars K L : MsgL .  vars A T : Bool . 
+
+--- client side
+  rl  [req] : < idle,	A,     nil,   nil,    false, R >
+           => < set(f), false, nil,   nil,    false, R > . 
+  rl  [snd] : < snd(M), A,     K,     L,      T,    R >
+           => < snd(M), A,     K ; M, L,      T,    R > .
+  rl  [acc] : < snd(M), A,     K,     M' ; L, T,    R >
+           => < M # M', A,     K,     L,      T,    R > .
+  crl [los] : < snd(M), A,     K,     nil,    T,    R >
+           => < idle,   true,  K,     nil,    T,    R > if M =/= f .
+
+  op _#_ : Msg Msg -> Sender .
+  eq M # M' = if M == M' then acc(M) else snd(M) fi .
+
+  eq < set(M), A, K,     L, T, R > 
+   = < snd(M), A, K ; M, L, T, R > .
+
+  rl [sel] : acc(f) => set(0) .  rl [sel] : acc(f) => set(l) .
+  rl [sel] : acc(0) => set(1) .  rl [sel] : acc(0) => set(l) .
+  rl [sel] : acc(1) => set(0) .  rl [sel] : acc(1) => set(l) .
+  rl [sel] : acc(l) => idle .
+
+--- server side
+  crl [rec]  : < S, false, M ; K, L,     T,     R     >
+            => < S, false, K,     L ; M, M ? T, rec(M) > if R =/= rec(M) .
+  rl  [ign]  : < S, A,     M ; K, L,     T,     rec(M) >
+            => < S, A,     K,     L ; M, T,     rec(M) > .
+  crl [nil]  : < S, A,     nil,   L,     T,     rec(M) >
+            => < S, A,     nil,   L,     false,  wait   >
+   if M == l or A == true .
+
+  op _?_ : Msg Bool -> Bool .
+  eq M ? T = if M == f then true else T fi .
+endm
+
+mod BRP-ABS is
+  inc BRP .
+
+  var S : Sender . var R : Receiver . vars M M' : Msg .   
+  vars K L KL : MsgL . vars A T : Bool .
+
+--- abstraction
+  eq < S, A, KL ; M ; M ; K, L, T, R >
+   = < S, A, KL ; M ; K,     L, T, R > .
+  eq < S, A, K, KL ; M ; M ; L, T, R >
+   = < S, A, K, KL ; M ; L,     T, R > .
+
+--- coherence completion
+--- Note: rule names should be the same
+  rl  [acc] : < snd(M), A,     K,     M' ; L, T,     R >
+           => < M # M', A,     K,     M' ; L, T,     R > .
+  crl [rec]  : < S,     false, M ; K, L,      T,     R      >
+            => < S,     false, M ; K, L ; M,  M ? T, rec(M) > if R =/= rec(M) .
+  rl  [ign]  : < S,     A,     M ; K, L,      T,     rec(M) >
+            => < S,     A,     M ; K, L ; M,  T,     rec(M) > .
+endm
+
+mod BRP-CHECK is
+  protecting BRP-ABS .
+  inc LTLR-MODEL-CHECKER .
+  inc SIMPLEPROOF-COUNTEREXAMPLE .
+
+  subsort Conf < State .
+---  subsorts Context$Conf < StateContext .   --- no context used
+
+  op _\_ : Qid Msg -> StateAssignment [ctor prec 63] .
+  op modelCheckParamFair : State Formula FairnessSet FairFlag ~> ModelCheckResult
+        [special (id-hook LTLRFairnessCheckerSymbol
+              op-hook assignmentSymbol (_\_ : Qid MsgL ~> StateAssignment))] .
+
+  var M : Msg .  var C : StateContext .  var SS : StateSubstitution .
+
+  ops req sok snok sdnk rfst rinc rok rnok : -> Action .
+  eq  {C | 'req : SS}			 |= req	 = true .
+  eq  {C | 'acc : 'M \ l ; 'M' \ l ; SS} |= sok	 = true .
+  ceq {C | 'los : 'M \ M ; SS}		 |= snok = true if M =/= l .
+  eq  {C | 'los : 'M \ l ; SS}		 |= sdnk = true .
+  eq  {C | 'rec : 'M \ f ; SS}		 |= rfst = true .
+  ceq {C | 'rec : 'M \ M ; SS}		 |= rinc = true if M == 0 or M == 1 .
+  eq  {C | 'rec : 'M \ l ; SS}		 |= rok	 = true .
+  ceq {C | 'nil : 'M \ M ; SS}		 |= rnok = true if M =/= l .
+endm
+
+set verbose on .
+
+--- the request REQ must be followed by a comfirmation (SOK, SNOK, or SDNK) 
+--- before the next request
+red modelCheck(initial,
+    [] ( req -> O (~ req W (sok \/ snok \/ sdnk) ))) .
+
+--- An RFST indication must be followed by one of the two indications 
+--- ROK or RNOK before the beginning of a new transmission
+red modelCheck(initial,
+    [] ( rfst -> (~ req W (rok \/ rnok)))) .
+
+--- An SOK confirmation must be preceded by an ROK indication.
+red modelCheck(initial,
+    [] ( req -> (~ sok W rok))) .
+
+--- An RNOK indication must be preceded by an SNOK or SDNK confirmation
+red modelCheck(initial,
+    [] ( req -> (~ rnok W (snok \/ sdnk) ))) .
+

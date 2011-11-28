@@ -1,0 +1,258 @@
+***
+***        Maude LTLR model checker.
+***        Version 0.7
+***
+*** Changes: now support a parameterized fairness
+***
+
+load model-checker
+
+fmod STATE-SUBSTITUTION is
+  protecting QID .
+  sorts StateAssignment .
+  --- assignment (_\_ Qid Value-> StateAssignItem) should defined.
+
+  sorts StateSubstitution .
+  subsorts StateAssignment < StateSubstitution .
+  op noSubstitution : -> StateSubstitution [ctor] .
+  op _;_ : StateSubstitution StateSubstitution -> StateSubstitution
+        [ctor comm assoc id: noSubstitution prec 65] .
+  eq A:StateAssignment ; A:StateAssignment = A:StateAssignment .
+endfm
+
+fmod STATE-CONTEXT is
+  sort StateContext .
+  op noContext : -> StateContext [ctor] . 
+  op [] : -> StateContext [ctor] .  --- context (hole) symbol
+endfm
+
+fmod PROOF-TERM is
+  including STATE-SUBSTITUTION .
+  including STATE-CONTEXT .
+  sorts RuleName .
+  subsorts Qid < RuleName .
+  ops unlabeled : -> RuleName .
+
+  sorts ProofTerm .
+  op deadlockevent : -> ProofTerm [ctor format(r! o)] .
+  op {_|_:_} : StateContext RuleName StateSubstitution -> ProofTerm 
+     [ctor format (c! o c r c y? c! o)] .
+endfm
+
+fmod ACTION-SATISFACTION is
+  protecting PROOF-TERM .
+  sorts Action .
+  op tau : -> Action [ctor] .        --- empty action
+  op deadlock : -> Action [ctor] .   --- deadlock action
+  op _|=_ : ProofTerm Action -> Bool [frozen] .
+
+  eq P:ProofTerm |= tau = true .
+  eq deadlockevent    |= deadlock = true .
+endfm
+
+--- spatial action pattern (in TLR paper)
+fmod SPATIAL-ACTION-PATTERN is
+  including ACTION-SATISFACTION .
+
+  sorts BasicActionPattern ActionPattern .
+  subsorts BasicActionPattern < ActionPattern < Action .
+  op tau : -> BasicActionPattern [ctor] .
+
+--- BasicActionPattern def should be defined from a theory, with the form:
+---   eq {C | 'label : 'V1 \ V1 ; ... ; 'VK \ VK ; SUBST} 
+---      |= label(V1,...,VK) = true .
+
+--- Action patterns involving context.
+  op top : BasicActionPattern -> ActionPattern .
+  op {_|_} : StateContext BasicActionPattern -> ActionPattern .
+
+  vars C C' : StateContext . var R : RuleName . vars S : StateSubstitution . 
+  var BSP : BasicActionPattern .
+
+  eq {C  | R : S} |= {C | BSP} = {C  | R : S} |= BSP .
+  eq {[] | R : S} |= top(BSP)  = {[] | R : S} |= BSP .
+
+--- NOTE: action patterns with variables can be defined as below
+---   ceq {C | 'label : 'V1 \ V1 ; ... ; 'VK \ VK ; SUBST} 
+---       |= label(V1',...,VK') = true .
+---    if metaMatch(%MOD%, upTerm(V1'), upTerm(V1), nil, 0)
+---    /\ ...
+---    /\ metaMatch(%MOD%, upTerm(VK'), upTerm(VK), nil, 0) .
+---
+---  ceq {C | R : S} |= {C' | BSP} = {C | R : S} |= BSP 
+---   if metaMatch(%MOD%, upTerm(C'), upTerm(C), nil, 0) :: Substitution .
+---
+--- But we will not use that since it is very inefficient.
+endfm
+
+--- enabled prop for basic action.
+fmod ENABLED-ACTION is
+  including SATISFACTION .
+  including ACTION-SATISFACTION .
+  pr SPATIAL-ACTION-PATTERN .
+
+  op enabled : Action -> Prop .
+
+  op _enables_ : State BasicActionPattern ~> Bool .
+  ceq S:State |= enabled(A:BasicActionPattern) = true
+   if S:State enables A:BasicActionPattern .
+
+  --- "_enables_" function should be also defined for each 
+  --- basic action patterns and its corresponding sort. 
+  --- see ltlr-interface.maude
+endfm
+
+fmod FAIRNESS-SPEC is
+  including LTL .
+  including SATISFACTION .
+  including ACTION-SATISFACTION .
+
+--- Fairness conditions
+  sorts FairnessSet Fairness FairnessType .
+  subsort Fairness < FairnessSet .
+  op noFairness : -> FairnessSet [ctor] .
+  op _;_ : FairnessSet FairnessSet -> FairnessSet 
+	[ctor comm assoc id: noFairness] .
+  ops fair just : -> FairnessType . --- strong and weak fairness
+  op _:_=>_ : FairnessType Formula Formula -> Fairness [ctor] .
+
+endfm
+
+--- Realized param (for action, "enabled" prop must be defined.)
+fmod PARAM-FAIRNESS-SPEC is
+  including FAIRNESS-SPEC .
+
+  sort RealizedFair .
+  op realized : State ~> RealizedFair [frozen ctor] .
+  op realFair : Fairness -> RealizedFair [frozen ctor] .
+
+--- op realized : Pattern ~> RealizedFair [frozen ctor]  and 
+--- corresponding rules will be automatically generated 
+--- as similar way with the op _enables_.
+
+--- NOTE: current implementation (2011/9/21) does not support 
+--- heterogeneous variable pairs... but the new version will do.
+--- We only consider a fairness formula: enabled(A) => A here.
+endfm
+
+--- used in full-maude interface. Currently, only for enabled(A) => A.
+fmod PARAM-FLAG-INTERFACE is
+  sorts FairFlag FairSEFlag FairSWFlag .
+  op noParam : -> FairFlag .
+  op flag : FairSEFlag FairSWFlag -> FairFlag .
+  ops stateParam seParam : -> FairSEFlag .
+  ops justParam fairParam jfParam : -> FairSWFlag .
+
+--- [has_strong, has_weak] -> fair flag.
+--- this should be setted later
+  op #param#flag# : ~> FairFlag .
+  eq #param#flag# = noParam [owise] . --- default value
+endfm
+
+--- counter example
+fmod LTLR-COUNTEREXAMPLE is
+  including LTL .
+  including SATISFACTION .
+  including ACTION-SATISFACTION .
+  sorts Transition TransitionList ModelCheckResult .
+  subsorts Transition < TransitionList .
+  subsorts Bool < ModelCheckResult .
+  op {_,_} : State ProofTerm -> Transition [ctor format (n s d i s d)] .
+  op nil : -> TransitionList [ctor] .
+  op __ : TransitionList TransitionList -> TransitionList [ctor assoc id: nil] .
+  op counterexample : TransitionList TransitionList -> ModelCheckResult [ctor] .
+endfm
+
+fmod RULENAME-COUNTEREXAMPLE is
+  including LTLR-COUNTEREXAMPLE .
+  op {_} : RuleName -> ProofTerm [ctor format (c! r c! o)] .
+  eq {S:State, {C:StateContext | R:RuleName : S:StateSubstitution}} 
+   = {S:State, {R:RuleName}} .
+endfm
+
+fmod SIMPLEPROOF-COUNTEREXAMPLE is
+  including LTLR-COUNTEREXAMPLE .
+  op {_:_} : RuleName StateSubstitution -> ProofTerm [ctor format (c! r c y? c! o)] .
+  eq {S:State, {C:StateContext | R:RuleName : S:StateSubstitution}} 
+   = {S:State, {R:RuleName : S:StateSubstitution}} .
+endfm
+
+fmod LTLR-MODEL-CHECKER is
+  including PARAM-FAIRNESS-SPEC .
+  including ENABLED-ACTION .
+  including PARAM-FLAG-INTERFACE .
+  including LTLR-COUNTEREXAMPLE .
+  subsorts Prop Action < Formula .
+  subsort State < StateContext .
+
+--- model checker
+
+  --- default model checker with no fairness
+  op modelCheck : State Formula ~> ModelCheckResult .
+  eq modelCheck(S:State, F:Formula)
+   = modelCheckParamFair(S:State, F:Formula, noFairness, noParam) .
+
+  --- model checker with ground fairness
+  op modelCheckFair : State Formula FairnessSet ~> ModelCheckResult .
+  eq modelCheckFair(S:State, F:Formula, C:FairnessSet)
+   = modelCheckParamFair(S:State, F:Formula, C:FairnessSet, noParam) .
+
+  --- basic function
+  --- args: initial states, LTLR formula, (ground) Fairness, param Flag 
+  op modelCheckParamFair : State Formula FairnessSet FairFlag ~> ModelCheckResult
+        [special (
+           id-hook LTLRFairnessCheckerSymbol
+
+	   --- state/event temporal
+           op-hook tauSymbol               (tau : ~> Action)
+           op-hook trueSymbol              (True : ~> Formula)
+           op-hook falseSymbol             (False : ~> Formula)
+           op-hook notSymbol               (~_ : Formula ~> Formula)
+           op-hook nextSymbol              (O_ : Formula ~> Formula)
+           op-hook andSymbol               (_/\_ : Formula Formula ~> Formula)
+           op-hook orSymbol                (_\/_ : Formula Formula ~> Formula)
+           op-hook untilSymbol             (_U_ : Formula Formula ~> Formula)
+           op-hook releaseSymbol           (_R_ : Formula Formula ~> Formula)
+
+	   --- proofterm
+           op-hook prooftermSymbol         ({_|_:_} : StateContext RuleName StateSubstitution ~> ProofTerm)
+	   op-hook substitutionSymbol      (_;_ : StateSubstitution StateSubstitution ~> StateSubstitution)
+	   op-hook emptySubstSymbol        (noSubstitution : ~> StateSubstitution)
+	   op-hook qidSymbol               (<Qids> : ~> Qid)
+	   op-hook unlabeledSymbol         (unlabeled : ~> RuleName)
+	   op-hook noContextSymbol         (noContext : ~> StateContext)
+           term-hook deadlockTerm          (deadlockevent)
+           
+	   --- labeling
+           op-hook satisfiesSymbol         (_|=_ : State Formula ~> Bool)
+           op-hook actionmatchSymbol       (_|=_ : ProofTerm Formula ~> Bool)
+           term-hook trueTerm              (true)
+
+           --- counter example
+           term-hook falseTerm             (false)
+	   op-hook transitionSymbol        ({_,_} : State ProofTerm ~> Transition)
+	   op-hook transitionListSymbol    (__ : TransitionList TransitionList ~> TransitionList)
+	   op-hook nilTransitionListSymbol (nil : ~> TransitionList)
+           op-hook counterexampleSymbol    (counterexample : TransitionList TransitionList ~> ModelCheckResult)
+
+           --- fairness
+	   op-hook fairnessSymbol          (_:_=>_ : FairnessType Formula Formula ~> Fairness)
+	   op-hook strongFairTypeSymbol    (fair : ~> FairnessType)
+	   op-hook weakFairTypeSymbol      (just : ~> FairnessType)
+	   op-hook fairnessSetSymbol       (_;_ : FairnessSet FairnessSet ~> FairnessSet)
+	   op-hook emptyFairnessSetSymbol  (noFairness : ~> FairnessSet)
+
+           --- realized-map
+           op-hook realizedTestSymbol      (realized : State ~> RealizedFair)
+           op-hook realizedResultSymbol	   (realFair : Fairness ~> RealizedFair)
+
+           --- fairness flags
+	   op-hook noParamFlagSymbol	   (noParam : ~> FairFlag)
+	   op-hook paramFlagSymbol	   (flag : FairSEFlag FairSWFlag ~> FairFlag) 
+	   op-hook stateParamFlagSymbol	   (stateParam : ~> FairSEFlag)
+	   op-hook seParamFlagSymbol	   (seParam : ~> FairSEFlag)
+	   op-hook justParamFlagSymbol	   (justParam : ~> FairSWFlag)
+	   op-hook fairParamFlagSymbol	   (fairParam : ~> FairSWFlag)
+	   op-hook jfParamFlagSymbol	   (jfParam : ~> FairSWFlag)
+         )] .
+endfm

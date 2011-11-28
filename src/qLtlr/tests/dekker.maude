@@ -1,0 +1,116 @@
+load parallel
+
+mod DEKKER is inc PARALLEL .
+    subsort Int < Pid .
+    op crit : -> UserStatement .
+    op rem : -> LoopingUserStatement .
+    ops p1 p2 : -> Program .
+    op initialMem : -> Memory .
+    op initial : -> MachineState .
+
+    eq p1 =
+    repeat
+        'c1 := 1 ;
+        while 'c2 = 1 do
+	if 'turn = 2 then
+	    'c1 := 0 ;
+	while 'turn = 2 do skip od ;
+	    'c1 := 1
+	fi
+        od ;
+        crit ;
+        'turn := 2 ;
+        'c1 := 0 ;
+        rem
+    forever .
+    eq p2 =
+    repeat
+        'c2 := 1 ;
+        while 'c1 = 1 do
+	if 'turn = 1 then
+	    'c2 := 0 ;
+	while 'turn = 1 do skip od ;
+	    'c2 := 1
+	fi
+        od ;
+        crit ;
+        'turn := 1 ;
+        'c2 := 0 ;
+        rem
+    forever .
+
+    --- initial memory and state
+    eq initialMem = ['c1, 0] ['c2, 0] ['turn, 1] .
+    eq initial = { [1, p1] | [2, p2], initialMem } .
+endm
+
+mod DEKKER-CHECK is 
+    protecting DEKKER .
+    inc PARALLEL-CHECK .
+
+    ops in-crit in-rem : Pid -> Prop .
+
+    var M : Memory .  vars P R : Program .  var S : Soup .  vars I : Pid .
+
+    *** process I is in critical section
+    eq {[I, crit ; R] | S, M} |= in-crit(I) = true . 
+    eq {[I, R] | S, M} |= in-crit(I) = false [owise] . 
+    *** process I is in rem section
+    eq {[I, rem ; R] | S, M} |= in-rem(I) = true . 
+    eq {[I, R] | S, M} |= in-rem(I) = false [owise] . 
+endm
+
+set verbose on .
+
+*** the mutual exclusion property; two process cannot enter the
+*** critical section at the same time.
+red modelCheck(initial, [] ~ (in-crit(1) /\ in-crit(2))) .
+
+*** the strong fairness property
+red modelCheck(initial, []<> exec(1) -> []<> in-crit(1)) .
+
+*** If both p1 and p2 execute infinitely often, then both enter
+*** their critical sections infinitely often.
+red modelCheck(initial, 
+    []<> exec(1) /\ []<> exec(2) 
+    -> ([]<> in-crit(1) /\ []<> in-crit(2))) .
+
+*** the weak fairness property;
+*** If p1 and p2 both get to execute infinitely often, then
+*** if p1 is infinitely often out of its rem section, then
+*** p1 enters its critical section infinitely often.
+red modelCheck(initial, 
+    []<> exec(1) /\ []<> exec(2) -> []<> ~ in-rem(1) 
+    -> []<> in-crit(1)) .
+
+*** another weak fairness
+red modelCheck(initial, 
+    ((<>[] enabled(1) -> []<> exec(1)) /\ (<>[] enabled(2) -> []<> exec(2))
+    /\ []<> ~ in-rem(1))
+    -> ([]<> exec(1) -> []<> in-crit(1))) .
+
+*** another weak fairness  ( just for processor 2 is enough )
+red modelCheck(initial, 
+    ((<>[] enabled(2) -> []<> exec(2))
+    /\ []<> ~ in-rem(1))
+    -> ([]<> exec(1) -> []<> in-crit(1))) .
+
+*** test for weak fairness
+
+--- true
+red modelCheckFair(initial, 
+    []<> ~ in-rem(1) -> ([]<> exec(1) -> []<> in-crit(1)),
+    (just : enabled(1) => exec(1)) ; (just : enabled(2) => exec(2))
+) .
+
+--- false
+red modelCheckFair(initial, 
+    []<> ~ in-rem(1) -> ([]<> exec(1) -> []<> in-crit(1)),
+    (just : enabled(1) => exec(1))
+) .
+
+--- true
+red modelCheckFair(initial, 
+    []<> ~ in-rem(1) -> ([]<> exec(1) -> []<> in-crit(1)),
+    (just : enabled(2) => exec(2))
+) .

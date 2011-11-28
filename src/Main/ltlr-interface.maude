@@ -1,0 +1,1238 @@
+load full-maude
+load ltlr-checker
+
+view Sort from TRIV to META-MODULE is sort Elt to Sort . endv
+view Type from TRIV to META-TERM is sort Elt to Type . endv
+view Rule from TRIV to META-MODULE is sort Elt to Rule . endv
+view SortSet from TRIV to META-MODULE is sort Elt to SortSet . endv
+view SubsortDeclSet from TRIV to META-MODULE is sort Elt to SubsortDeclSet . endv
+
+--- automatic _enables_ function generation:
+--- given a rule [l] : T1 => T2 if COND, 
+--- and an action l(X), $enabledIn(T1, l(X)) = true if COND.. 
+--- Also, for each operator f that can contain a sort of rule l, 
+--- $enabledIn(f(V1,..,VK), l(X))  
+---   = $enabledIn(W1,l(X)) \/...\/ $enalbedIn(Wn,l(X)) 
+--- for only corresponding variables {W1,...,Wn} \subseteq {V1,...,VK}. 
+--- And repeat with a sort of the operator f. 
+--- For A, AC, ACU operators, similar with extension.. 
+
+--- op/sort name definitions
+fmod TLR-META-DEF is
+  pr META-TERM .
+  ops %SUBST%OP% %ASSIGN%OP% %HOLE%OP% : ~> Qid .
+  ops %ACT%CHK%OP% %PROOF%OP% %ENABLE%OP% : ~> Qid .
+  ops %REAL%OP% %RFAIR%OP% : ~> Qid .
+  ops %ASSIGN%SORT% %ACT%SORT% %CONTEXT%PREFIX% %RFAIR%SORT% : ~> Type .
+  ops %CONTEXT%VAR% %SUBST%VAR% : ~> Qid .
+  ops %STRONG%FAIR%CONST% %WEAK%FAIR%CONST% : ~> Constant .
+  ops %FAIR%TERM% : Constant Term ~> Term .
+
+  var T : Term . var C : Constant .
+
+  eq %SUBST%OP%    = '_;_ .
+  eq %ASSIGN%OP%   = '_\_ .
+  eq %HOLE%OP%     = '`[`] .
+  eq %ACT%CHK%OP%  = '_|=_ .
+  eq %PROOF%OP%    = '`{_|_:_`} .
+  eq %ENABLE%OP%   = '_enables_ .
+  eq %REAL%OP%     = 'realized .
+  eq %RFAIR%OP%    = 'realFair .
+
+  eq %ASSIGN%SORT%    = 'StateAssignment .
+  eq %ACT%SORT%       = 'BasicActionPattern .
+  eq %RFAIR%SORT%     = 'RealizedFair .
+  eq %CONTEXT%PREFIX% = 'Context .
+
+  eq %CONTEXT%VAR% = 'CXT:StateContext .
+  eq %SUBST%VAR%   = 'SUB:StateSubstitution .
+
+  eq %STRONG%FAIR%CONST%  = 'fair.FairnessType .
+  eq %WEAK%FAIR%CONST%    = 'just.FairnessType .
+  eq %FAIR%TERM%(C,T)     = '_:_=>_[C,'enabled[T],T] .
+endfm
+
+******************************************************************************
+***       Utility Functions
+******************************************************************************
+
+fmod TLR-TERM-UTIL is
+  pr CONVERSION .
+  pr EXT-TERM .
+
+  vars Q F : Qid . var QS : QidSet . var N : Nat .
+  var TY : Type . var TYL : TypeList . var TYS : TypeSet . 
+  var C : Constant . var V : Variable . 
+  var T : Term . var TL : TermList . var NTL : NeTermList .
+
+--- upTerm fir Qid (default function is buggy in this case)
+  op upQid : Qid ~> Constant .
+  eq upQid(Q) = qid("'" + string(Q) + ".Qid") .
+
+--- type list from variables
+  op typeList : TermList ~> TypeList .
+  eq typeList((V,TL)) = getType(V) typeList(TL) .
+  eq typeList(empty) = nil .
+
+--- type set membership
+  op _in_ : Type TypeSet ~> Bool .
+  eq TY in (TY ; TYS) = true .  
+  eq TY in TYS = false [owise] .
+
+--- get top qid of term
+  op top : Term -> Qid .
+  eq top(V) = getName(V) .
+  eq top(C) = getName(C) .
+  eq top(F[TL]) = F .
+
+--- make varable (list) fresh
+  op fresh : TermList QidSet ~> TermList .
+  eq fresh(V, (Q ; QS)) 
+   = if getName(V) == getName(Q)
+     then fresh(addsufix '# To V, QS) 
+     else fresh(V, QS) 
+     fi .
+  eq fresh(V, none) = V .
+  eq fresh((V,NTL), QS)
+   = fresh(V,QS), fresh(NTL, (fresh(V,QS) ; QS)) .
+  eq fresh(empty, QS) = empty .
+
+--- make i-th variable with given typelist
+  op mkVar : Nat TypeList ~> TermList .
+  eq mkVar(N, TY TYL)
+   = qid("V@" + string(N,10) + ":" + string(TY)), mkVar(s N, TYL) .
+  eq mkVar(N, nil) = empty .
+endfm
+
+fmod TLR-MODULE-UTIL is
+  inc MODULE-HANDLING * 
+     (op addOps to addOpsSE, op addEqs to addEqsSE, op addSorts to addSortsSE) .
+
+  vars Q F : Qid .  var M : Module . 
+  var TY TY1 : Type . var TYL : TypeList . vars T T2 : Term .
+  var AtS : AttrSet .  var HL : HookList .
+  var OD : OpDecl . var ODS : OpDeclSet . 
+  var CD1 CD2 : Condition .
+
+--- generate op-hooks
+  op opHooks : Qid OpDeclSet -> HookList .
+  eq opHooks(Q, (op F : TYL -> TY [AtS] .) ODS)
+   = op-hook(Q, F, TYL, TY) opHooks(Q, ODS) .
+  eq opHooks(Q, none) = nil .
+
+--- clear nil condition
+  op clearCd : Equation ~> Equation .
+  op clearCd : Rule ~> Rule .
+  eq clearCd(ceq T =  T2 if nil [AtS] .) = (eq T =  T2 [AtS] .) .
+  eq clearCd(crl T => T2 if nil [AtS] .) = (rl T => T2 [AtS] .) .
+  eq clearCd(E:Equation) = E:Equation [owise] .
+  eq clearCd(R:Rule) = R:Rule [owise] .
+
+  eq clearCd(E:Equation) = E:Equation [owise] .
+
+--- lhs sides of matching conditions
+  op lhsMC : Condition ~> TermList .
+  eq lhsMC(CD1 /\ T := T2 /\ CD2) = lhsMC(CD1), T, lhsMC(CD2) .
+  eq lhsMC(CD1) = empty [owise] .
+
+--- filter operator by name
+  op filterOpsByName : Qid OpDeclSet ~> OpDeclSet .
+  eq filterOpsByName(Q, (op F : TYL -> TY [AtS] .) ODS)
+   = if Q == F 
+     then (op F : TYL -> TY [AtS] .) filterOpsByName(Q, ODS)
+     else filterOpsByName(Q, ODS) 
+     fi .
+  eq filterOpsByName(Q, none) = none .
+
+  op specialTLROp : HookList ~> OpDecl .
+  eq specialTLROp(HL)
+   = (op 'modelCheckParamFair : 'State 'Formula 'FairnessSet 'FairFlag
+		      -> 'ModelCheckResult 
+		 [special (id-hook('LTLRFairnessCheckerSymbol, nil) HL)] .) .
+
+--- filter free operators (non assoc)
+  op filterFreeOps : OpDeclSet ~> OpDeclSet .
+  eq filterFreeOps(OD ODS)
+    = if isAssociative(OD) then none else OD fi filterFreeOps(ODS) .
+  eq filterFreeOps(none) = none .
+
+--- filter assoc operators 
+  op filterAssocOps : OpDeclSet ~> OpDeclSet .
+  eq filterAssocOps(OD ODS)
+    = if isAssociative(OD) then OD else none fi filterAssocOps(ODS) .
+  eq filterAssocOps(none) = none .
+
+--- get a set of types that has the same kind with TypeSet .
+  op sameKindSet : Module Type TypeList ~> TypeSet .
+  eq sameKindSet(M, TY1, TY TYL)
+   = if sameKind(M,TY1,TY) then TY else none fi ; sameKindSet(M,TY1,TYL) .
+  eq sameKindSet(M, TY1, nil) = none .
+
+--- get a set of types that is greater then TY1
+  op greaterTypeSet : Module Type TypeList ~> TypeSet .
+  eq greaterTypeSet(M, TY1, TY TYL)
+   = if sortLeq(M,TY1,TY) then TY else none fi ; greaterTypeSet(M,TY1,TYL)  .
+  eq greaterTypeSet(M, TY1, nil) = none .
+endfm
+
+******************************************************************************
+***       Rule Attribute Parser
+******************************************************************************
+
+--- attr parse result
+fmod TLR-ATTR is 
+  pr 2TUPLE{Qid,QidList} * (sort Tuple{Qid,QidList} to TLRAttr) . 
+endfm
+
+view TLRAttr from TRIV to TLR-ATTR is sort Elt to TLRAttr . endv
+
+--- rule attribute parse
+fmod TLR-ATTR-PARSE is
+  pr INT .
+  pr SET{TLRAttr} * (sort Set{TLRAttr} to TLRAttrSet, op _,_ to _;_) .
+
+  --- NOTE: the characters ';', ',', '(', ')' should not be used in the names.
+
+  var S : String .  vars N M : Nat .  var Q : Qid . vars QL QL' : QidList .
+
+  --- parse: item1 ; item2 ; ... ; itemN
+  op parseAttr : String ~> TLRAttrSet .
+ ceq parseAttr(S)
+   = parseItem(substr(S,0,N)) ; parseAttr(substr(S,s(N),length(S)))
+   if N := find(S, ";", 0) .
+  eq parseAttr(S) = parseItem(S) [owise] .
+
+  --- parse: name(q1,q2,...,qk)
+  op parseItem : String ~> TLRAttr .
+ ceq parseItem(S) 
+  = (qid($trim(substr(S,0,N))), parseCList(substr(S, s(N), M - N - 1)))
+   if N := find(S, "(", 0) /\ M := rfind(S, ")", length(S)) . 
+  eq parseItem(S) = (qid($trim(S)), nil) .
+
+  --- parse comma list
+  op parseCList : String ~> QidList .
+ ceq parseCList(S)
+   = qid($trim(substr(S,0,N)))  parseCList(substr(S, s(N), length(S)))
+   if N := find(S,",",0) .
+  eq parseCList(S) = qid($trim(S)) .
+
+  --- remove pre/postfix spaces
+  op $trim : String ~> String .
+  op $ltrim : String Nat ~> String .
+  op $rtrim : String Nat ~> String .
+  eq $trim(S) = $ltrim($rtrim(S,length(S)),0) .
+  eq $ltrim(S,N) 
+   = if substr(S,N,1) == " " then $ltrim(S,s N) else substr(S,N,length(S)) fi .
+  eq $rtrim(S,s N) 
+   = if substr(S,N,1) == " " then $rtrim(S,N) else substr(S,0,s N) fi .
+  eq $rtrim(S,0) = S .
+endfm
+
+
+fmod TLR-ATTR-RES is 
+  pr 2TUPLE{Rule,Term} * (sort Tuple{Rule,Term} to AttrRes) .
+endfm
+
+view AttrRes from TRIV to TLR-ATTR-RES is sort Elt to AttrRes . endv
+
+fmod TLR-ATTR-RES-SET is
+  pr SET{AttrRes} * (sort Set{AttrRes} to AttrResSet) .
+endfm
+
+view AttrResSet from TRIV to TLR-ATTR-RES-SET is sort Elt to AttrResSet . endv
+
+--- rule attribute interprete and get (patterns, strong_patterns, weak_patterns)
+fmod TLR-ATTR-INTERPRETE is
+  pr TLR-META-DEF .
+  pr TLR-ATTR-PARSE .
+  pr TLR-TERM-UTIL .
+  pr TLR-MODULE-UTIL .
+  pr 3TUPLE{AttrResSet,TermSet,TermSet} * 
+     (sort Tuple{AttrResSet,TermSet,TermSet} to IntprtResult,
+      op ((_,_,_)) to pat:_fair:_just:_) .
+
+  vars Q QR : Qid . vars QL : QidList . var NQL : NeQidList . var QS : QidSet . 
+  var R : Rule .  var RS : RuleSet .  var AtS : AttrSet .
+  vars T T2 : Term . var TL : TermList .  var V : Variable .  var S : String .
+  vars STS STS' WTS WTS' : TermSet . 
+  var TAS : TLRAttrSet .  var IR : IntprtResult . 
+  var TAR : AttrRes . vars TARS TARS' : AttrResSet .
+
+--- interprete result: tuple (patterns, strong_patterns, weak_patterns)
+  op emptyResult : ~> IntprtResult .
+  eq emptyResult = pat: empty fair: emptyTermSet just: emptyTermSet .
+
+  op _+_ : IntprtResult IntprtResult -> IntprtResult [comm] .
+  eq (pat: TARS  fair: STS  just: WTS) + (pat: TARS' fair: STS' just: WTS')
+   = (pat: TARS, TARS' fair: STS | STS'  just: WTS | WTS') .
+
+--- return tuple: (patterns, strong_patterns, weak_patterns)
+  op intprtAttr : RuleSet ~> IntprtResult .
+ ceq intprtAttr(R RS) 
+   = intprtAttr(QR, R, parseAttr(S), vars((lhs(R),lhsMC(cond(R)))), 
+                emptyResult) 
+   + intprtAttr(RS)
+   if QR := label(R) /\ metadata(S) AtS := atts(R) /\ cond(R) :: EqCondition .
+  eq intprtAttr(RS) = emptyResult [owise] .
+
+  op intprtAttr : Qid Rule TLRAttrSet QidSet IntprtResult ~> IntprtResult .
+ ceq intprtAttr(QR, R, (Q,QL) ; TAS, QS, IR)
+  = intprtAttr(QR, R, TAS, QS, IR + caseAttr(QR, Q, (R,T)))
+   if T := createPat(QR, QL, QS) .  
+  eq intprtAttr(QR, R, TAS, QS, IR) = IR [owise] . --- errornous lookup ignored
+
+  op caseAttr : Qid Qid AttrRes ~> IntprtResult .
+  eq caseAttr(QR, QR, TAR) = pat: TAR fair: emptyTermSet just: emptyTermSet .
+  eq caseAttr(QR, 'fair, TAR) = pat: TAR fair: p2(TAR) just: emptyTermSet .
+  eq caseAttr(QR, 'just, TAR) = pat: TAR fair: emptyTermSet just: p2(TAR) .
+  eq caseAttr(QR, Q, TAR) = emptyResult [owise] .
+
+--- create single patterns: name(v1,...,vK)
+  op createPat : Qid QidList QidSet ~> Term .
+ ceq createPat(QR, QL, QS) 
+   = if TL == empty then addType(QR,%ACT%SORT%) else (QR[TL]) fi
+   if TL := findVars(QL,QS) .
+
+--- rule variables look-up
+  op findVars : QidList QidSet ~> TermList .
+  eq findVars(Q NQL, QS) = findVars(Q, QS), findVars(NQL, QS) .
+  eq findVars(Q, (V ; QS))
+   = if Q == V or-else Q == getName(V) then V else findVars(Q, QS) fi .
+  eq findVars(nil, QS) = empty .
+---  eq findVars(Q, none) = empty . --- errornous lookup not reduced..
+endfm
+
+---(
+red parseAttr("req; (C) ; req(C,N); req(C,S,N); fair; just(C)") .
+red findVars('C 'S 'N, ('C:Oid ; 'S:Oid ; 'N:Nat ; 'nil.Nat?)) .
+
+red intprtAttr(
+    (rl '`[_`,_`,_`,_`]['C:Oid,'S:Oid,'N:Nat,'nil.Nat?] => 'null.Conf [label('req) metadata("req; req(C,N); req(C,S,N); fair; just(C)")] .)
+    (rl '_<-_['I:Oid,'CNT:Cnts] => 'null.Conf [label('dupl) metadata("fair(I); dupl(I,CNT)")] .)
+    ) .
+    ---)
+
+******************************************************************************
+***       Declaration Generation
+******************************************************************************
+
+fmod TLR-DECL-RESULT is
+  pr 5TUPLE{SortSet,SubsortDeclSet,OpDeclSet,EquationSet,RuleSet} *
+     (sort Tuple{SortSet,SubsortDeclSet,OpDeclSet,EquationSet,RuleSet} 
+        to DeclResult,
+      op ((_,_,_,_,_)) to sorts:_subsorts:_ops:_eqs:_rls:_,
+      op p1_ to sorts, op p2_ to subsorts, op p3_ to ops, 
+      op p4_ to eqs, op p5_ to rls) .
+
+  vars S1 S2 : SortSet . vars SD1 SD2 : SubsortDeclSet .
+  vars OS1 OS2 : OpDeclSet . vars ES1 ES2 : EquationSet .  
+  vars RS1 RS2 : RuleSet .
+
+  op emptyResult : ~> DeclResult .
+  eq emptyResult = sorts: none subsorts: none ops: none eqs: none rls: none .
+
+  op _+_ : DeclResult DeclResult -> DeclResult [comm] .
+  eq (sorts: S1  subsorts: SD1  ops: OS1  eqs: ES1  rls: RS1 ) 
+   + (sorts: S2 subsorts: SD2 ops: OS2 eqs: ES2 rls: RS2) 
+   = (sorts: S1 ; S2 subsorts: SD1 SD2 ops: OS1 OS2 eqs: ES1 ES2 rls: RS1 RS2) .
+endfm
+
+fmod TLR-PATTERN-DECL-GENERATE is
+  pr TLR-ATTR-INTERPRETE .
+  pr TLR-TERM-UTIL .
+  pr TLR-DECL-RESULT .
+
+  var Q : Qid . var QS : QidSet . var T : Term . var TS : TermSet .
+  var TL : TermList . var NTL : NeTermList .
+  vars V V' : Variable . var C : Constant . var TY : Type . var TYL : TypeList .
+
+--- operators for basic spatial action patterns
+
+  op patternDecl : TermSet ~> DeclResult .
+  eq patternDecl(T | TS)
+   = (sorts: none
+      subsorts: none
+      ops: (op top(T) : typeList(Vars(T)) -> %ACT%SORT% [ctor] .) 
+            assignOps(typeList(Vars(T))) 
+      eqs: (eq %ACT%CHK%OP%[proofPattern(T),T] = 'true.Bool [none] .)
+      rls: none)
+   + patternDecl(TS) .
+  eq patternDecl(emptyTermSet) = emptyResult .
+
+--- generating assignment operators
+  op assignOps : TypeList -> OpDeclSet .
+  eq assignOps(TY TYL) =
+     (op %ASSIGN%OP% : 'Qid TY -> %ASSIGN%SORT% [ctor prec(63)] .) 
+     assignOps(TYL) .
+  eq assignOps(nil) = none .
+
+--- create meta proof term from pattern
+  op proofPattern : Term ~> Term .
+  eq proofPattern(T) 
+   = %PROOF%OP%[fresh(%CONTEXT%VAR%,vars(T)), upQid(top(T)), 
+                proofSubst(Vars(T),fresh(%SUBST%VAR%,vars(T)))] .
+
+  --- substitution with additional fresh variable..
+  op proofSubst : TermList Variable ~> Term .
+  eq proofSubst(NTL, V)   = %SUBST%OP%[proofAssigns(NTL), V] .
+  eq proofSubst(empty, V) = V .
+
+  op proofAssigns : TermList ~> TermList .
+  eq proofAssigns((V,TL))
+   = %ASSIGN%OP%[upQid(getName(V)), V], proofAssigns(TL) .
+  eq proofAssigns(empty) = empty .
+endfm
+
+---(
+red patternDecl(
+      ('dupl['I:Oid]) | ('dupl['I:Oid,'CNT:Cnts]) | 'req.BasicActionPattern
+    | ('req['C:Oid]) | ('req['C:Oid,'N:Nat]) | ('req['C:Oid,'S:Oid,'N:Nat])) .
+---)
+
+fmod TLR-ENABLE-PATTERN is
+  pr 5TUPLE{Term,Type,Term,TermSet,Condition} * 
+     (sort Tuple{Term,Type,Term,TermSet,Condition} to EnablePat,
+      op ((_,_,_,_,_)) to #_:_enables_with_if_.,
+      op p1_ to lhs, op p2_ to type, op p3_ to action, 
+      op p4_ to rhs, op p5_ to cond) .
+endfm
+
+view EnablePat from TRIV to TLR-ENABLE-PATTERN is sort Elt to EnablePat . endv
+
+--- generate skeletons of enabled operators and equations
+--- NOTE: rules in AttrResSet should have EqCondition.
+fmod TLR-ENABLED-PATTERN-GENERATE is
+  pr TLR-MODULE-UTIL .
+  pr TLR-ATTR-INTERPRETE .
+  pr SET{EnablePat} .
+
+  var F : Qid .  var N : Nat .  var M : Module .  var R : Rule .
+  var T T1 : Term . var VL : TermList .  vars V V1 V2 : Variable .
+  var OD : OpDecl . vars ODS FODS AODS : OpDeclSet . vars AtS AtS1 : AttrSet . 
+  vars TY TY1 : Type .  var TYL : TypeList . 
+  var TYS : TypeSet . var NTYS : NeTypeSet .  
+  vars TARS : AttrResSet .  var EP : EnablePat . 
+  vars EPS EPS1 EPS2 : Set{EnablePat} . var NEPS : NeSet{EnablePat} .
+
+--- enable patterns
+  op enablePats : Module AttrResSet ~> Set{EnablePat} .
+ ceq enablePats(M, TARS)
+   = fixEnbPat(M,FODS,AODS,empty, exEnbAssocPat(M,AODS,enbRulePat(M,TARS)))
+   if FODS := filterFreeOps(filterConstructorSymbols(getOps(M)))
+   /\ AODS := filterAssocOps(filterConstructorSymbols(getOps(M))) .
+
+--- enable default patterns from rules
+  op enbRulePat : Module AttrResSet ~> Set{EnablePat} .
+  eq enbRulePat(M, ((R,T),TARS))
+   = (# lhs(R) : leastSort(M,lhs(R)) enables T with emptyTermSet if cond(R) .), 
+     enbRulePat(M, TARS) .
+  eq enbRulePat(M, empty) = empty .
+
+--- fixpoint computation with ctor ops extension
+  op fixEnbPat : Module OpDeclSet OpDeclSet Set{EnablePat} Set{EnablePat} ~> Set{EnablePat} .
+  eq fixEnbPat(M, FODS, AODS, EPS1, EPS2)
+   = if EPS2 subset EPS1 then EPS1
+     else fixEnbPat(M, FODS, AODS, (EPS1,EPS2), 
+             exEnbAssocPat(M,AODS,evalEnbFreePat(M,FODS,EPS2))) fi .
+
+--- extended pattern with free ctor operators
+--- greaterTypeSet would be useful, but cannot be used when
+  op evalEnbFreePat : Module OpDeclSet Set{EnablePat} ~> Set{EnablePat} .
+  eq evalEnbFreePat(M, ODS, (EP,NEPS))
+   = evalEnbFreePat(M, ODS, EP), evalEnbFreePat(M, ODS, NEPS) .
+ ceq evalEnbFreePat(M, (op F : TYL -> TY [AtS] .) ODS, EP)
+   = (# F[VL] : TY enables action(EP) with enbFreeRhs(VL,NTYS) if nil .),
+     evalEnbFreePat(M, ODS, EP) 
+   if NTYS := greaterTypeSet(M, type(EP), TYL) 
+   /\ VL := fresh(mkVar(1,TYL), vars(action(EP))) .
+  eq evalEnbFreePat(M, ODS, EP) = empty [owise] .
+  eq evalEnbFreePat(M, ODS, empty) = empty .
+
+--- corresponding variables in the left side 
+  op enbFreeRhs : TermList TypeSet ~> TermSet .
+  eq enbFreeRhs((V,VL), TYS)
+   = if getType(V) in TYS then V else emptyTermSet fi | enbFreeRhs(VL, TYS) .
+  eq enbFreeRhs(empty, TYS) = emptyTermSet .
+
+--- extended pattern with assoc ctor operators (arity 2)
+  op exEnbAssocPat : Module OpDeclSet Set{EnablePat} ~> Set{EnablePat} .
+  eq exEnbAssocPat(M, ODS, (EP,NEPS))
+   = exEnbAssocPat(M, ODS, EP), exEnbAssocPat(M, ODS, NEPS) .
+ ceq exEnbAssocPat(M, (op F : TYL -> TY [assoc AtS] .) ODS, EP)
+   = caseExAssoc(M, F, TY, AtS, EP), exEnbAssocPat(M, ODS, EP)
+   if NTYS := greaterTypeSet(M, type(EP), TYL) .
+  eq exEnbAssocPat(M, ODS, EP) = EP [owise] .
+  eq exEnbAssocPat(M, ODS, empty) = empty .
+
+--- extend pattern for assoc op
+  op caseExAssoc : Module Qid Type AttrSet EnablePat ~> Set{EnablePat} .
+  eq caseExAssoc(M, F, TY, comm AtS, EP)
+   = mkExEnablePat(M, F[mkFVar(getKind(M,TY),EP),lhs(EP)],TY,EP) .
+  eq caseExAssoc(M, F, TY, AtS, EP)
+   = caseExNCA(M, F, TY, mkFVar(getKind(M,TY) getKind(M,TY),EP), AtS, EP) .
+
+--- fresh vars for EnablePat
+  op mkFVar : TypeList EnablePat ~> TermList .
+  eq mkFVar(TYL, EP)
+   = fresh(mkVar(1,TYL), vars(lhs(EP)) ; vars(action(EP))) .
+
+--- non-commutative case for extension
+  op caseExNCA : Module Qid Type TermList AttrSet EnablePat ~> Set{EnablePat} .
+  eq caseExNCA(M, F, TY, (V1,V2), id(T1) AtS, EP)
+   = mkExEnablePat(M, F[V1, lhs(EP), V2], TY, EP) .
+  eq caseExNCA(M, F, TY, (V1,V2), left-id(T1) AtS, EP)
+   = mkExEnablePat(M, F[V1, lhs(EP), V2], TY, EP),
+     mkExEnablePat(M, F[V1, lhs(EP)], TY, EP) .
+  eq caseExNCA(M, F, TY, (V1,V2), right-id(T1) AtS, EP)
+   = mkExEnablePat(M, F[V1, lhs(EP), V2], TY, EP),
+     mkExEnablePat(M, F[lhs(EP), V2], TY, EP) .
+  eq caseExNCA(M, F, TY, (V1,V2), AtS, EP)
+   = mkExEnablePat(M, F[V1, lhs(EP), V2], TY, EP),
+     mkExEnablePat(M, F[V1, lhs(EP)], TY, EP),
+     mkExEnablePat(M, F[lhs(EP), V2], TY, EP) [owise] .
+  eq caseExNCA(M, F, TY, VL, AtS, EP) = empty [owise] . --- error case
+
+--- make extend enabled pat
+  op mkExEnablePat : Module Term Type EnablePat ~> Set{EnablePat} .
+ ceq mkExEnablePat(M, T, TY, EP)
+   = (# T1 : TY enables action(EP) with rhs(EP) if cond(EP) .)
+    if T1 := getTerm(metaNormalize(M, T)) .
+  eq mkExEnablePat(M, T, TY, EP) = empty [owise] . --- error case
+endfm
+
+fmod TLR-ENABLED-DECL-GENERATE is
+  pr TLR-META-DEF .
+  pr TLR-DECL-RESULT .
+  pr TLR-ENABLED-PATTERN-GENERATE .
+
+  var F QE : Qid .
+  vars QS : QidSet .
+  var M : Module .
+  var N : Nat .
+  var R : Rule .
+  vars T T1 T2 : Term .
+  var C : Constant .
+  var TS : TermSet .
+  var Eq : Equation .
+  var EqS : EquationSet .
+  var OD : OpDecl .
+  var ODS : OpDeclSet .
+  vars TY TY1 : Type . var TYL : TypeList . var NTYL : NeTypeList .
+  vars TARS : AttrResSet .
+  var CD : Condition .
+  var DCL : [DeclResult] .
+
+  var AtS : AttrSet . 
+
+  var EP : EnablePat . vars EPS : Set{EnablePat} .
+  vars FTS STS WTS : TermSet .
+
+--- enable equations from patterns
+  op enableEqDecl : Set{EnablePat} ~> DeclResult .
+  eq enableEqDecl((EP,EPS))
+   = (sorts: none
+      subsorts: none
+      ops: (op %ENABLE%OP% : type(EP) %ACT%SORT% -> 'Bool [none] .)
+      eqs: clearCd(ceq %ENABLE%OP%[lhs(EP),action(EP)] = 'true.Bool
+                  if cond(EP) /\ enbEqSubCond(action(EP),rhs(EP)) [none] .)
+      rls: none)
+   + enableEqDecl(EPS) .
+  eq enableEqDecl(empty) = emptyResult .
+
+--- [action term, variable terms] -> condition
+  op enbEqSubCond : Term TermSet ~> EqCondition .
+  eq enbEqSubCond(T, T1 | TS) = (enbEqSubCdTerm(T, T1 | TS) = 'true.Bool) .
+  eq enbEqSubCond(T, emptyTermSet) = nil .
+
+  op enbEqSubCdTerm : Term TermSet ~> TermList .
+  eq enbEqSubCdTerm(T, T1 | T2 | TS) 
+   = '_or-else_[%ENABLE%OP%[T1,T], enbEqSubCdTerm(T, T2 | TS)] .
+  eq enbEqSubCdTerm(T, T1) = %ENABLE%OP%[T1,T] .
+  eq enbEqSubCdTerm(T, emptyTermSet) = 'true.Bool .
+
+--- realized fair rules from (patterns, strong_patterns, weak_patterns)
+  op realizedRlDecl : Set{EnablePat} TermSet TermSet ~> DeclResult .
+  eq realizedRlDecl((EP,EPS), STS, WTS)
+   = (sorts: none subsorts: none
+      ops: (op %REAL%OP% : type(EP) -> %RFAIR%SORT% [frozen(1) ctor] .) 
+      eqs: none
+      rls: realizedRls(EP, STS, WTS))
+   + realizedRlDecl(EPS, STS, WTS) .
+  eq realizedRlDecl(empty, STS, WTS) = emptyResult .
+
+--- realized fair rules from a single pattern
+  op realizedRls : EnablePat TermSet TermSet ~> RuleSet .
+  eq realizedRls(EP, STS, WTS)
+   = if rhs(EP) == emptyTermSet
+     then realizedFairRls(lhs(EP),action(EP),cond(EP),STS,%STRONG%FAIR%CONST%)
+          realizedFairRls(lhs(EP),action(EP),cond(EP),WTS,%WEAK%FAIR%CONST%)
+     else realizedSubRls(lhs(EP), rhs(EP), cond(EP)) fi .
+
+--- [lhs, action, condition, fair_patterns, fair_type] -> rules
+  op realizedFairRls : Term Term Condition TermSet Constant ~> RuleSet .
+  eq realizedFairRls(T1, T, CD, (T | FTS), C)
+   = clearCd(crl %REAL%OP%[T1] => %RFAIR%OP%[%FAIR%TERM%(C,T)] if CD [none] .) .
+  eq realizedFairRls(T1, T2, CD, FTS, C) = none [owise] .
+
+--- sub rules
+  op realizedSubRls : Term TermSet Condition ~> RuleSet .
+  eq realizedSubRls(T1, (T | TS), CD)
+   = clearCd(crl %REAL%OP%[T1] => %REAL%OP%[T] if CD [none] .)
+     realizedSubRls(T1, TS, CD) .
+  eq realizedSubRls(T1, emptyTermSet, CD) = none .
+endfm
+
+fmod NAME-AUX-FUNCS is
+    pr META-LEVEL .
+    pr CONVERSION .
+
+    vars Q : Qid . vars QL : QidList . var TY : Type .  var TYL : TypeList .
+    vars S : Sort . vars SS : SortSet . var NSS : NeSortSet .  
+    var N : Nat . var NL : NatList .
+
+    op preStr : QidList -> String .
+    eq preStr(Q QL) = string(Q) + "$" + preStr(QL) .
+    eq preStr(nil) = "" .
+
+--- sort name auxilarly func
+    op $_(_) : QidList Sort -> Sort . --- make a special sort
+    eq $ QL(S) = qid(preStr(QL) + string(S)) .
+
+    op >_(_) : QidList Sort -> Sort . --- inverse of $ (with filter)
+    eq > QL(S) = qid(substr(string(S),length(preStr(QL)),length(string(S)))) .
+
+    op ?_(_) : QidList Sort -> Bool . --- check if special sort
+    eq ? QL(S) = rfind(string(S), preStr(QL) , 0) :: Nat .
+
+    op $_{_} : QidList SortSet -> SortSet . --- map $ to set
+    eq $ QL{S ; SS} = ($ QL(S)) ; ($ QL{SS}) .  
+    eq $ QL{none} = none .
+
+    op $_[_] : QidList TypeList -> TypeList . --- map $ to list
+    eq $ QL[TY TYL] = ($ QL(TY)) ($ QL[TYL]) .  
+    eq $ QL[nil] = nil .
+
+    op ?_{_} : QidList SortSet -> SortSet . --- filter
+   ceq ? QL{S ; SS} = S ; ? QL{SS} if ? QL(S) .
+    eq ? QL{SS} = none [owise] .
+
+    op >_{_} : QidList SortSet -> SortSet . --- filter & apply >
+   ceq > QL{S ; SS} = > QL(S) ; > QL{SS} if ? QL(S) .
+    eq > QL{SS} = none [owise] .
+endfm
+
+view SortPair from TRIV to 2TUPLE{Sort,Sort}*(op `(_`,_`) to `[_`,_`] ) is
+    sort Elt to Tuple{Sort,Sort} .
+endv
+
+fmod TLR-CONTEXT-DECL-GENERATE is
+  pr TLR-META-DEF .
+  pr NAME-AUX-FUNCS .
+  pr TLR-TERM-UTIL .
+  pr SET{SortPair} .
+  pr TLR-DECL-RESULT .
+
+  var C : Constant . vars F Q B : Qid . var QL : QidList . var V : Variable .
+  vars T T2 : Term . var TL : TermList .
+  var TY TY' : Type . var TYL TYL' : TypeList . 
+  var M : Module .  var IL : ImportList .
+  vars S S' : Sort . vars SS SS1 SS2 SS3 : SortSet . 
+  vars K : Kind . vars KS : KindSet .
+  vars SdS SdS1 SdS2 : SubsortDeclSet .  vars ODS OS1 OS2 : OpDeclSet .
+  vars MbS : MembAxSet .  vars EqS : EquationSet .  
+  var R : Rule .  var RS : RuleSet .
+  var Cd : EqCondition .  var AtS : AttrSet .
+  var NTYL NTYL' : NeTypeList . var NSS : NeSortSet .
+  var SPS : Set{SortPair} .
+
+--- Some auxilarly functions
+  op subsort_<_. : TypeList TypeList -> SubsortDeclSet .
+  op subsort_<_. : SortSet SortSet -> SubsortDeclSet .
+  op makeSet : QidList -> QidSet .
+
+  eq (subsort TY NTYL < TY' NTYL' .) 
+   = (subsort TY < TY' .) (subsort NTYL < NTYL' .) .
+  eq (subsort nil < nil .) = none .
+
+  eq (subsort S ; NSS < SS .) = (subsort S < SS .) (subsort NSS < SS .) .
+  eq (subsort S' < S ; NSS .) = (subsort S' < S .) (subsort S' < NSS .) .
+  eq (subsort none < none .) = none .
+
+  eq makeSet(Q QL) = Q ; makeSet(QL) .
+  eq makeSet(nil) = none .
+
+  --- make connections between new sorts 
+  op adjustSubsorts : Module QidList SortSet -> SubsortDeclSet .
+  op adjustSubsorts : Module QidList SortSet Set{SortPair} -> SubsortDeclSet .
+  eq adjustSubsorts(M, QL, SS)
+   = adjustSubsorts(M, QL, SS, empty) .
+ ceq adjustSubsorts(M, QL, S ; S' ; SS, SPS)
+   = (subsort $ QL(S) < $ QL(S').) 
+     adjustSubsorts(M,QL, S ; S' ; SS, ([S,S'],SPS))
+   if sortLeq(M, S, S') /\ not [S, S'] in SPS .
+  eq adjustSubsorts(M, QL, SS, SPS) = none [owise] .
+
+--- hole symbols : Module*RuleSet --> (SortSet,Subsorts,OpDeclSet)
+  op holeDecl : Module RuleSet -> DeclResult .
+ ceq holeDecl(M, R RS)
+   = (sorts: ($ %CONTEXT%PREFIX%(TY))
+      subsorts: (subsort TY < ($ %CONTEXT%PREFIX%(TY)) .)
+      ops: (op %HOLE%OP% : nil -> $ %CONTEXT%PREFIX%(TY) [ctor] .)
+      eqs: none
+      rls: none) 
+   + holeDecl(M, RS)
+   if TY := leastSort(M, lhs(R)) .
+  eq holeDecl(M, none) = emptyResult .
+
+--- context symbols
+  op actCDecl : OpDeclSet -> DeclResult .
+ ceq actCDecl((op Q : TYL -> TY [AtS] .) OS1)
+   = (sorts: ($ %CONTEXT%PREFIX%{makeSet(TYL) ; TY} )
+      subsorts: (subsort TYL TY < $ %CONTEXT%PREFIX%[TYL TY] .) 
+      ops: actCOps(Q, nil, TYL, TY, AtS)
+      eqs: none
+      rls: none) 
+   + actCDecl(OS1)
+   if TYL =/= nil .
+  eq actCDecl(OS1) = emptyResult [owise] .
+
+  op actCOps : Qid TypeList TypeList Type AttrSet -> OpDeclSet .
+  eq actCOps(Q, TYL, TY' TYL', TY, AtS)
+   = (op Q : TYL $ %CONTEXT%PREFIX%(TY') TYL' -> $ %CONTEXT%PREFIX%(TY) [AtS] .)
+      actCOps(Q, TYL TY', TYL', TY, AtS) .
+  eq actCOps(Q, TYL, nil, TY, AtS) = none .
+endfm
+
+******************************************************************************
+***       TLR Module Generation
+******************************************************************************
+
+fmod TLR-BASIC-MODULE-GENERATE is
+  pr TLR-PATTERN-DECL-GENERATE .
+  pr TLR-ENABLED-DECL-GENERATE .
+  pr TLR-MODULE-UTIL .
+
+  var M : Module . var R : Rule . var T : Term . 
+  var TARS : AttrResSet .  var HL : HookList .  
+  vars DCL1 DCL2 DCL3 : DeclResult .
+  var IPR : IntprtResult .  var EPS : Set{EnablePat} . 
+
+  op PROOF`[_`] : ModuleExpression -> ModuleExpression .
+
+  op basicPatternMod : Module ~> Module .
+ ceq basicPatternMod(M)
+   = (mod PROOF[getName(M)] is
+       including getName(M) .
+       including 'LTLR-MODEL-CHECKER .
+       sorts none .
+       none
+       ops(DCL1) specialTLROp(HL)
+       none
+       eqs(DCL1)
+       none
+     endm)
+   if IPR := intprtAttr(getRls(M)) 
+   /\ EPS := enablePats(M,p1(IPR))
+   /\ DCL1 := patternDecl(getTermSet(p1(IPR)))
+   /\ HL := opHooks('assignmentSymbol,filterOpsByName(%ASSIGN%OP%,ops(DCL1))) .
+
+  op getTermSet : AttrResSet ~> TermSet .
+  eq getTermSet(((R,T), TARS)) = T | getTermSet(TARS) .
+  eq getTermSet(empty) = emptyTermSet .
+endfm
+
+fmod TLR-FAIR-MODULE-GENERATE is
+  pr TLR-BASIC-MODULE-GENERATE .
+
+  var M : Module . var R : Rule . vars T T1 : Term . 
+  var TARS : AttrResSet .  var HL : HookList .  
+  vars DCL1 DCL2 DCL3 : DeclResult .  vars STS WTS : TermSet .
+  var IPR : IntprtResult .  var EPS : Set{EnablePat} . 
+
+  op FAIR`[_`] : ModuleExpression -> ModuleExpression .
+
+  op fairMod : Module ~> Module .
+ ceq fairMod(M)
+   = (mod FAIR[getName(M)] is
+       including 'EXT-BOOL .
+       including PROOF[getName(M)] .
+       sorts none .
+       none
+       ops(DCL2) ops(DCL3) 
+       none
+       eqs(DCL2) 
+       (eq '#param#flag#.FairFlag = paramFlag(p2(IPR),p3(IPR)) [none] .)
+       rls(DCL3)
+     endm)
+   if IPR := intprtAttr(getRls(M)) 
+   /\ EPS := enablePats(M,p1(IPR))
+   /\ DCL2 := enableEqDecl(EPS)
+   /\ DCL3 := realizedRlDecl(EPS,p2(IPR),p3(IPR)) .
+
+--- param flags
+  op paramFlag : TermSet TermSet ~> Term .
+  eq paramFlag((T | STS), emptyTermSet)
+   = 'flag['seParam.FairSEFlag,'fairParam.FairSWFlag] .
+  eq paramFlag(emptyTermSet, (T | WTS))
+   = 'flag['seParam.FairSEFlag,'justParam.FairSWFlag] .
+  eq paramFlag((T | STS), (T1 | WTS))
+   = 'flag['seParam.FairSEFlag,'jfParam.FairSWFlag] .
+  eq paramFlag(emptyTermSet, emptyTermSet) = 'noParam.FairFlag .
+endfm
+
+fmod TLR-CONTEXT-MODULE-GENERATE is
+  pr TLR-CONTEXT-DECL-GENERATE .
+  pr TLR-MODULE-UTIL .
+
+  var M : Module .  vars DCL1 DCL2 : DeclResult .
+
+  op CONTEXT`[_`] : ModuleExpression -> ModuleExpression .
+
+  op contextMod : Module ~> Module .
+ ceq contextMod(M)
+   = (mod CONTEXT[getName(M)] is
+       including getName(M) .
+       including 'LTLR-MODEL-CHECKER .
+       sorts sorts(DCL1) ; sorts(DCL2) .
+       subsorts(DCL1) subsorts(DCL2)
+       adjustSubsorts(M, %CONTEXT%PREFIX%, 
+                      > %CONTEXT%PREFIX%{sorts(DCL1) ; sorts(DCL2)})
+       ops(DCL1) ops(DCL2) specialTLROp(opHooks('holeSymbol, ops(DCL1)))
+       none
+       none
+       none
+     endm)
+   if DCL1 := holeDecl(M, getRls(M)) /\ 
+      DCL2 := actCDecl(filterConstructorSymbols(getOps(M))) .
+endfm
+
+******************************************************************************
+***       Full Maude Functions
+******************************************************************************
+
+fmod TLR-PROOF-EXPR is
+  pr INST-EXPR-EVALUATION .
+  pr EVALUATION . 
+  pr MOD-EXP-PARSING .
+  inc MOD-EXPR .
+  pr TLR-BASIC-MODULE-GENERATE .
+
+  var ME ME' : ModuleExpression .  vars U U' M DM : Module .
+  var Q X : Qid .  var QIL : QidList .  vars T T2 : Term .  
+  var PDL : ParameterDeclList .  var IL : ImportList .  var VDS : OpDeclSet .
+  var VEPS : Set{Tuple{ViewExp,ViewExp}} .  vars DB DB1 : Database .
+  var DT : Default{Term} .  vars VES VES' : Set{ViewExp} .
+  vars MNS MNS' MNS'' MNS3 MNS4 : Set{ModuleName} .
+  var MIS : Set{ModuleInfo} .  var VIS : Set{ViewInfo} .
+
+ ceq evalModExp(PROOF[ME], PDL, DB)  
+   = if unitInDb(PROOF[ME'], DB1)
+     then < DB1 ; PROOF[ME'] > 
+     else < evalModule(basicPatternMod(M), none, DB1) ; PROOF[ME'] >
+     fi
+    if < DB1 ; ME' > := evalModExp(ME, PDL, DB)
+    /\ M := getFlatModule(ME',DB1) .
+
+  eq parseModExp('PROOF`[_`][T]) = PROOF[parseModExp(T)] . 
+
+  eq solveUps('upModule['PROOF`[_`][T]], DB)
+   = solveUpsModExp('upModule['PROOF`[_`][T]], DB) .
+  eq solveUps('upTerm['PROOF`[_`][T], 'bubble[T2]], DB)
+   = solveUpsModExp('upTerm['PROOF`[_`][T], 'bubble[T2]], DB) .
+
+  eq labelInModExp(X, PROOF[ME]) = labelInModExp(X, ME) . 
+
+  eq header2Qid(PROOF[ME]) = qid("PROOF[" + string(header2Qid(ME)) + "]") .
+  eq header2QidList(PROOF[ME]) = ('PROOF '`[ header2QidList(ME) '`]) .
+
+  eq prepModExp(PROOF[ME], VEPS) = PROOF[prepModExp(ME, VEPS)] .
+
+  eq setUpModExpDeps(PROOF[ME], 
+      db(< ME ; DT ; U ; U' ; M ; VDS ; MNS ; VES > MIS,
+         MNS', VIS, VES', MNS'', MNS3, MNS4, QIL))
+   = db(< ME ; DT ; U ; U' ; M ; VDS ; MNS . PROOF[ME] ; VES > MIS,
+         MNS', VIS, VES', MNS'', MNS3, MNS4, QIL) .
+  eq setUpModExpDeps(PROOF[ME], 
+      db(< ME ; DM ; U ; U' ; M ; VDS ; MNS ; VES > MIS,
+         MNS', VIS, VES', MNS'', MNS3, MNS4, QIL))
+   = db(< ME ; DM ; U ; U' ; M ; VDS ; MNS . PROOF[ME] ; VES > MIS,
+         MNS', VIS, VES', MNS'', MNS3, MNS4, QIL) .
+ ceq setUpModExpDeps(PROOF[ME], DB)
+   = warning(DB, '\r 'Error: '\o 'Module header2QidList(ME) 
+                     'not 'in 'database. '\n)
+   if not unitInDb(ME, DB) .
+endfm
+
+fmod TLR-FAIR-EXPR is
+  pr INST-EXPR-EVALUATION .
+  pr EVALUATION . 
+  pr MOD-EXP-PARSING .
+  inc MOD-EXPR .
+  pr TLR-FAIR-MODULE-GENERATE .
+
+  var ME ME' : ModuleExpression .  vars U U' M DM : Module .
+  var Q X : Qid .  var QIL : QidList .  vars T T2 : Term .  
+  var PDL : ParameterDeclList .  var IL : ImportList .  var VDS : OpDeclSet .
+  var VEPS : Set{Tuple{ViewExp,ViewExp}} .  vars DB DB1 : Database .
+  var DT : Default{Term} .  vars VES VES' : Set{ViewExp} .
+  vars MNS MNS' MNS'' MNS3 MNS4 : Set{ModuleName} .
+  var MIS : Set{ModuleInfo} .  var VIS : Set{ViewInfo} .
+
+ ceq evalModExp(FAIR[ME], PDL, DB)  
+   = if unitInDb(FAIR[ME'], DB1)
+     then < DB1 ; FAIR[ME'] > 
+     else < evalModule(fairMod(M), none, DB1) ; FAIR[ME'] >
+     fi
+    if < DB1 ; ME' > := evalModExp(ME, PDL, DB)
+    /\ M := getFlatModule(ME',DB1) .
+
+  eq parseModExp('FAIR`[_`][T]) = FAIR[parseModExp(T)] . 
+
+  eq solveUps('upModule['FAIR`[_`][T]], DB)
+   = solveUpsModExp('upModule['FAIR`[_`][T]], DB) .
+  eq solveUps('upTerm['FAIR`[_`][T], 'bubble[T2]], DB)
+   = solveUpsModExp('upTerm['FAIR`[_`][T], 'bubble[T2]], DB) .
+
+  eq labelInModExp(X, FAIR[ME]) = labelInModExp(X, ME) . 
+
+  eq header2Qid(FAIR[ME]) = qid("FAIR[" + string(header2Qid(ME)) + "]") .
+  eq header2QidList(FAIR[ME]) = ('FAIR '`[ header2QidList(ME) '`]) .
+
+  eq prepModExp(FAIR[ME], VEPS) = FAIR[prepModExp(ME, VEPS)] .
+
+  eq setUpModExpDeps(FAIR[ME], 
+      db(< ME ; DT ; U ; U' ; M ; VDS ; MNS ; VES > MIS,
+         MNS', VIS, VES', MNS'', MNS3, MNS4, QIL))
+   = db(< ME ; DT ; U ; U' ; M ; VDS ; MNS . FAIR[ME] ; VES > MIS,
+         MNS', VIS, VES', MNS'', MNS3, MNS4, QIL) .
+  eq setUpModExpDeps(FAIR[ME], 
+      db(< ME ; DM ; U ; U' ; M ; VDS ; MNS ; VES > MIS,
+         MNS', VIS, VES', MNS'', MNS3, MNS4, QIL))
+   = db(< ME ; DM ; U ; U' ; M ; VDS ; MNS . FAIR[ME] ; VES > MIS,
+         MNS', VIS, VES', MNS'', MNS3, MNS4, QIL) .
+ ceq setUpModExpDeps(FAIR[ME], DB)
+   = warning(DB, '\r 'Error: '\o 'Module header2QidList(ME) 
+                     'not 'in 'database. '\n)
+   if not unitInDb(ME, DB) .
+endfm
+
+fmod TLR-CONTEXT-EXPR is
+  pr INST-EXPR-EVALUATION .
+  pr EVALUATION . 
+  pr MOD-EXP-PARSING .
+  inc MOD-EXPR .
+  pr TLR-CONTEXT-MODULE-GENERATE .
+
+  var ME ME' : ModuleExpression .  vars U U' M DM : Module .
+  var Q X : Qid .  var QIL : QidList .  vars T T2 : Term .  
+  var PDL : ParameterDeclList .  var IL : ImportList .  var VDS : OpDeclSet .
+  var VEPS : Set{Tuple{ViewExp,ViewExp}} .  vars DB DB1 : Database .
+  var DT : Default{Term} .  vars VES VES' : Set{ViewExp} .
+  vars MNS MNS' MNS'' MNS3 MNS4 : Set{ModuleName} .
+  var MIS : Set{ModuleInfo} .  var VIS : Set{ViewInfo} .
+
+ ceq evalModExp(CONTEXT[ME], PDL, DB)  
+   = if unitInDb(CONTEXT[ME'], DB1)
+     then < DB1 ; CONTEXT[ME'] > 
+     else < evalModule(contextMod(M), none, DB1) ; CONTEXT[ME'] >
+     fi
+    if < DB1 ; ME' > := evalModExp(ME, PDL, DB)
+    /\ M := getFlatModule(ME',DB1) .
+
+  eq parseModExp('CONTEXT`[_`][T]) = CONTEXT[parseModExp(T)] . 
+
+  eq solveUps('upModule['CONTEXT`[_`][T]], DB)
+   = solveUpsModExp('upModule['CONTEXT`[_`][T]], DB) .
+  eq solveUps('upTerm['CONTEXT`[_`][T], 'bubble[T2]], DB)
+   = solveUpsModExp('upTerm['CONTEXT`[_`][T], 'bubble[T2]], DB) .
+
+  eq labelInModExp(X, CONTEXT[ME]) = labelInModExp(X, ME) . 
+
+  eq header2Qid(CONTEXT[ME]) = qid("CONTEXT[" + string(header2Qid(ME)) + "]") .
+  eq header2QidList(CONTEXT[ME]) = ('CONTEXT '`[ header2QidList(ME) '`]) .
+
+  eq prepModExp(CONTEXT[ME], VEPS) = CONTEXT[prepModExp(ME, VEPS)] .
+
+  eq setUpModExpDeps(CONTEXT[ME], 
+      db(< ME ; DT ; U ; U' ; M ; VDS ; MNS ; VES > MIS,
+         MNS', VIS, VES', MNS'', MNS3, MNS4, QIL))
+   = db(< ME ; DT ; U ; U' ; M ; VDS ; MNS . CONTEXT[ME] ; VES > MIS,
+         MNS', VIS, VES', MNS'', MNS3, MNS4, QIL) .
+  eq setUpModExpDeps(CONTEXT[ME], 
+      db(< ME ; DM ; U ; U' ; M ; VDS ; MNS ; VES > MIS,
+         MNS', VIS, VES', MNS'', MNS3, MNS4, QIL))
+   = db(< ME ; DM ; U ; U' ; M ; VDS ; MNS . CONTEXT[ME] ; VES > MIS,
+         MNS', VIS, VES', MNS'', MNS3, MNS4, QIL) .
+ ceq setUpModExpDeps(CONTEXT[ME], DB)
+   = warning(DB, '\r 'Error: '\o 'Module header2QidList(ME) 
+                     'not 'in 'database. '\n)
+   if not unitInDb(ME, DB) .
+endfm
+
+******************************************************************************
+***        Extending Full Maude
+******************************************************************************
+
+--- REDEFINED
+fmod BANNER is
+  pr STRING .
+  op banner : -> String .
+  eq banner = "LTLR Fairness Model Checker September 27th 2011" .
+endfm
+
+fmod TLR-COMMANDS is
+  inc COMMANDS .
+
+  --- no fairness
+  op mc_|=_. : @Bubble@ @Bubble@ -> @Command@ .  
+
+  --- only ground fairness
+  op fmc_|=_under_. : @Bubble@ @Bubble@ @Bubble@ -> @Command@ .
+
+  --- param fairness
+  op mc_|=f_. : @Bubble@ @Bubble@ -> @Command@ .
+
+  --- param and ground fairness
+  op fmc_|=f_under_. : @Bubble@ @Bubble@ @Bubble@ -> @Command@ .
+endfm
+
+--- REDEFINED: frequently used as meta functions in many cases.
+fmod MOD-EXPRS is
+  including OPERATOR-ATTRIBUTES .
+  including EXTENDED-SORTS .
+
+  sorts @Map@ @MapList@ .
+  subsort @Map@ < @MapList@ .
+  subsorts @Token@ < @ModExp@ .
+
+  *** module expression
+  op _*`(_`) : @ModExp@ @MapList@ -> @ModExp@ .
+  op _`{_`} : @ModExp@ @ViewExp@ -> @ModExp@ .
+  op TUPLE`[_`] : @Token@ -> @ModExp@ .
+  op POWER`[_`] : @Token@ -> @ModExp@ .
+  op _+_ : @ModExp@ @ModExp@ -> @ModExp@ [assoc prec 42] .
+
+  op PROOF`[_`]   : @ModExp@ -> @ModExp@ . --- NEW: basic proof terms 
+  op FAIR`[_`]    : @ModExp@ -> @ModExp@ . --- NEW: fairness
+  op CONTEXT`[_`] : @ModExp@ -> @ModExp@ . --- NEW: context module
+
+  *** renaming maps
+  op op_to_ : @Token@ @Token@ -> @Map@ .
+  op op_:_->_to_ : @Token@ @TypeList@ @Type@ @Token@ -> @Map@ .
+  op op_: ->_to_ : @Token@ @Type@ @Token@ -> @Map@ .
+  op op_:_~>_to_ : @Token@ @TypeList@ @Type@ @Token@ -> @Map@ .
+  op op_: ~>_to_ : @Token@ @Type@ @Token@ -> @Map@ .
+  op op_to_`[_`] : @Token@ @Token@ @AttrList@ -> @Map@ .
+  op op_:_->_to_`[_`] : @Token@ @TypeList@ @Type@ @Token@ @AttrList@ -> @Map@ .
+  op op_:`->_to_`[_`] : @Token@ @Type@ @Token@ @AttrList@ -> @Map@ .
+  op op_:_~>_to_`[_`] : @Token@ @TypeList@ @Type@ @Token@ @AttrList@ -> @Map@ .
+  op op_:`~>_to_`[_`] : @Token@ @Type@ @Token@ @AttrList@ -> @Map@ .
+  op sort_to_ : @Sort@ @Sort@ -> @Map@ .
+  op label_to_ : @Token@ @Token@ -> @Map@ .
+  op class_to_ : @Sort@ @Sort@ -> @Map@ .
+  op attr_._to_ : @Sort@ @Token@ @Token@ -> @Map@ .
+  op msg_to_ : @Token@ @Token@ -> @Map@ .
+  op msg_:_->_to_ : @Token@ @TypeList@ @Type@ @Token@ -> @Map@ .
+  op msg_:`->_to_ : @Token@ @Type@ @Token@ -> @Map@ .
+
+  op _`,_ : @MapList@ @MapList@ -> @MapList@ [assoc prec 42] .
+endfm
+
+--- REDEFINED 
+fmod FULL-MAUDE-SIGN is
+  including VIEWS .
+  including TLR-COMMANDS .
+  sort @Input@ .
+  subsorts @Command@ @Module@ @View@ < @Input@ .
+endfm
+
+fmod TLR-COMMAND-PROCESSING is
+  pr COMMAND-PROCESSING .
+  pr TLR-PROOF-EXPR .
+  pr TLR-FAIR-EXPR .
+
+  vars T T1 T2 T3 : Term .  
+  var TL TL1 : TermList .
+  vars DB DB1 : Database .
+  vars M M1 M2 : Module .
+  vars ME ME1 : ModuleExpression .
+  var  B : Bool .
+  var  QIL : QidList .
+  vars VS VDS : OpDeclSet .
+  vars QI QI' F V O : Qid .
+  var  TDM : Tuple{Database,ModuleExpression} .
+  var  TM : [Tuple{Term,Module,Bool,OpDeclSet,Database}] .
+  var  RP? : [ResultPair] .
+
+  op procTlrComd : Term ModuleExpression Database -> Tuple{Database,QidList} .
+  op procTlrComd : Term ModuleExpression Module OpDeclSet Database -> Tuple{Database,QidList} .
+  op procTlrComd : TermList Qid Term ModuleExpression Module OpDeclSet Database -> Tuple{Database,QidList} .
+
+  op procTlrMC : Term ModuleExpression Module OpDeclSet Database -> Tuple{Database,QidList} .
+
+--- process tlr commands
+  eq procTlrComd(T, ME, DB)
+   = if compiledModule(ME, DB)
+     then procTlrComd(T, ME, getFlatModule(ME,DB), getVars(ME,DB), DB)
+     else procTlrComd(T, modExp(evalModExp(ME,DB)), 
+                      getFlatModule(modExp(evalModExp(ME,DB)),
+		                    database(evalModExp(ME,DB))),
+		      getVars(modExp(evalModExp(ME,DB)), 
+		              database(evalModExp(ME,DB))), 
+		      database(evalModExp(ME,DB)))
+     fi .
+
+--- parse terms in the commands
+ ceq procTlrComd(F[T,TL], ME, M, VDS, DB)
+   = if getModule(TM) :: Module and-then getTerm(TM) :: Term 
+     then procTlrComd(TL, F, getTerm(TM), getName(getModule(TM)),
+                      getModule(TM), getVars(TM), getDatabase(TM))
+     else << DB ; getMsg(getTerm(metaReduce(getModule(TM), getTerm(TM)))) >>
+     fi
+   if B  := included('META-MODULE, getImports(getTopModule(ME,DB)), DB)
+   /\ TM := solveBubblesRed(T, M, B, VDS, DB) .	--- 'in MOD : " part
+
+  --- extra arguments will be parsed under PROOF[ME]
+ ceq procTlrComd(TL, F, T, ME, M, VDS, DB)
+   = if parseTerms(TL, M1, VDS, DB1):: TermList
+     then procTlrMC(F[T,parseTerms(TL,M1,VDS,DB1)], ME, M1, VDS, DB1)
+     else << DB1 ; getMsg(parseTerms(TL,M1,VDS,DB1)) >> 
+     fi 
+  if < DB1 ; ME1 > := evalModExp(PROOF[ME], DB) 
+  /\ M1 := getFlatModule(ME1, DB1) .
+
+  eq procTlrComd(T, ME, unitError(QIL), VDS, DB) = << DB ; QIL >> .
+  eq procTlrComd(T, ME, M, VDS, DB) 
+   = << DB ; ('\r 'Error: '\o 'unknown 'TLR 'command '\n) >> [owise] .
+  eq procTlrComd(TL, F, T, ME, M, VDS, DB) 
+   = << DB ; ('\r 'Error: '\o 'cannot 'create header2QidList(PROOF[ME])  '\n) >> [owise] .
+
+--- process tlr model-checking commands
+ ceq procTlrMC('mc_|=_.[T1,T2], ME, M, VDS, DB)   --- no fairness
+   = if RP? :: ResultPair
+     then << DB ; 
+             ('\b 'ltlr 'model 'check 'in 
+              '\o eMetaPrettyPrint(ME) '\b ': '\o '\n '\s '\s
+              eMetaPrettyPrint(M,T1) '\b '|= '\o eMetaPrettyPrint(M,T2) '\n 
+              '\b 'result '\o '\s 
+              eMetaPrettyPrint(getType(RP?))
+              '\s '\b ': '\o '\n '\s '\s 
+              eMetaPrettyPrint(M, getTerm(RP?)) '\n) >>
+     else << DB ; getMsg(getTerm(RP?)) >>
+     fi 
+   if RP? := metaReduce(M,'modelCheckParamFair[T1,T2,
+               'noFairness.FairnessSet,'noParam.FairFlag]) .
+
+ ceq procTlrMC('mc_|=f_.[T1,T2], ME, M, VDS, DB)   --- param fairness
+   = if RP? :: ResultPair
+     then << DB1 ; 
+             ('\b 'ltlr 'model 'check 'in 
+              '\o eMetaPrettyPrint(ME) '\b ': '\o '\n '\s '\s
+              eMetaPrettyPrint(M,T1) '\b '|=f '\o eMetaPrettyPrint(M,T2) '\n 
+              '\b 'result '\o '\s 
+              eMetaPrettyPrint(getType(RP?))
+              '\s '\b ': '\o '\n '\s '\s 
+              eMetaPrettyPrint(M2, getTerm(RP?))
+              '\n) >>
+     else << DB ; getMsg(getTerm(RP?)) >>
+     fi
+   if < DB1 ; ME1 > := evalModExp(FAIR[ME], DB)
+   /\ M2 := getFlatModule(FAIR[ME], DB1) 
+   /\ RP? := metaReduce(M2,'modelCheckParamFair[T1,T2,
+               'noFairness.FairnessSet,'#param#flag#.FairFlag]) .
+
+ ceq procTlrMC('fmc_|=_under_.[T1,T2,T3], ME, M, VDS, DB)   --- ground fairness
+   = if RP? :: ResultPair
+     then << DB1 ; 
+             ('\b 'ltlr 'model 'check 'in 
+              '\o eMetaPrettyPrint(ME) '\b ': '\o '\n '\s '\s
+              eMetaPrettyPrint(M,T1) '\b '|= '\o eMetaPrettyPrint(M,T2) '\n 
+	      '\b 'under 'fairness ': '\o '\n '\s '\s
+	      eMetaPrettyPrint(M,T3) '\n
+              '\b 'result '\o '\s 
+              eMetaPrettyPrint(getType(RP?))
+              '\s '\b ': '\o '\n '\s '\s 
+              eMetaPrettyPrint(M2, getTerm(RP?))
+              '\n) >>
+     else << DB ; getMsg(getTerm(RP?)) >>
+     fi
+   if < DB1 ; ME1 > := evalModExp(FAIR[ME], DB)
+   /\ M2 := getFlatModule(FAIR[ME], DB1) 
+   /\ RP? := metaReduce(M2,'modelCheckParamFair[T1,T2,T3,'noParam.FairFlag]) .
+
+ ceq procTlrMC('fmc_|=f_under_.[T1,T2,T3], ME, M, VDS, DB)  --- param&ground
+   = if RP? :: ResultPair
+     then << DB1 ; 
+             ('\b 'ltlr 'model 'check 'in 
+              '\o eMetaPrettyPrint(ME) '\b ': '\o '\n '\s '\s
+              eMetaPrettyPrint(M,T1) '\b '|=f '\o eMetaPrettyPrint(M,T2) '\n 
+	      '\b 'under 'fairness ': '\o '\n '\s '\s
+	      eMetaPrettyPrint(M,T3) '\n
+              '\b 'result '\o '\s 
+              eMetaPrettyPrint(getType(RP?))
+              '\s '\b ': '\o '\n '\s '\s 
+              eMetaPrettyPrint(M2, getTerm(RP?))
+              '\n) >>
+     else << DB ; getMsg(getTerm(RP?)) >>
+     fi
+   if < DB1 ; ME1 > := evalModExp(FAIR[ME], DB)
+   /\ M2 := getFlatModule(FAIR[ME], DB1) 
+   /\ RP? := metaReduce(M2,'modelCheckParamFair[T1,T2,T3,
+                                                '#param#flag#.FairFlag]) .
+
+
+  eq procTlrMC(T, ME, M, VDS, DB)
+   = << DB ; ('\r 'Error: '\o 'unknown 'TLR 'command '\n) >> [owise] .
+
+--- parse terms
+  op parseTerms : TermList Module OpDeclSet Database ~> TermList .
+  op parseTerms : TermList Module Bool OpDeclSet Database TermList ~> TermList .
+  eq parseTerms(TL, M, VDS, DB)
+   = parseTerms(TL, M, included('META-MODULE,getImports(M),DB), VDS,DB,empty) .
+  eq parseTerms((T,TL), M, B, VDS, DB, TL1)
+   = if solveBubbles(T,M,B,VDS,DB) :: Term
+     then parseTerms(TL, M, B, VDS, DB, (TL1,solveBubbles(T,M,B,VDS,DB)))
+     else solveBubbles(T,M,B,VDS,DB)
+     fi .
+  eq parseTerms(empty, M, B, VDS, DB, TL1) = TL1 .
+endfm
+
+mod TLR-DATABASE-HANDLING is
+  pr DATABASE-HANDLING .
+  pr TLR-COMMAND-PROCESSING .
+  pr TLR-CONTEXT-EXPR .
+
+  var Atts : AttributeSet . var X@DatabaseClass : DatabaseClass . 
+  var F : Qid . var O : Oid . var ME : ModuleExpression . var DB : Database .
+  var TL : TermList . var QIL : QidList .
+
+ crl [TLR] :
+    < O : X@DatabaseClass | 
+       db : DB, input : (F[TL]), output : QIL, default : ME, Atts >
+   => 
+    < O : X@DatabaseClass | 
+       db : getDatabase(procTlrComd(F[TL], ME, DB)), 
+       input : nilTermList,
+       output : getQidList(procTlrComd(F[TL], ME, DB)), 
+       default : ME, Atts >
+  if (F == 'mc_|=_.) or-else
+     (F == 'fmc_|=_under_.) or-else
+     (F == 'mc_|=f_.) or-else
+     (F == 'fmc_|=f_under_.) .
+
+endm
+
+mod TLR-FULL-MAUDE is
+  pr FULL-MAUDE .
+  pr TLR-DATABASE-HANDLING .
+endm
+
+
+set trace off .
+set break off .
+set profile off .
+
+--- set show advisories on .
+
+loop init .
+
