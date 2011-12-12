@@ -1,8 +1,9 @@
+
 ***
 *** The Suzuki-Kasami Distributed Mutual Exclusion Protocol
 ***
 
-(fmod NODEID is
+fmod NODEID is
   pr NAT .
   sort NodeID .
   subsort NzNat < NodeID .
@@ -12,9 +13,9 @@
 ---
   eq N = 3 .
   eq M = 1 .
-endfm)
+endfm
 
-(fmod QUEUE is
+fmod QUEUE is
   pr NODEID .
   sorts NeQueue Queue .
   subsort NeQueue < Queue .
@@ -36,9 +37,9 @@ endfm)
   eq I \in Q = false [owise] .
   eq empty?(empty) = true .
   eq empty?(I | Q) = false .
-endfm)
+endfm
 
-(fmod ARRAY is
+fmod ARRAY is
   pr NODEID .
   sorts AElm Array .
   subsort AElm < Array .
@@ -55,11 +56,11 @@ endfm)
   eq (((I : X) , A)[I] := Y) = (I : Y) , A .
   eq (A[I] := Y) = (I : Y) , A [owise] .
 
-endfm)
+endfm
 
 
 
-(fmod REQUEST is
+fmod REQUEST is
   pr NODEID .
   sort Request .
   op req : NodeID Nat -> Request [ctor] .
@@ -69,9 +70,9 @@ endfm)
   var X : Nat .
   eq node(req(J,X)) = J .
   eq sn(req(J,X)) = X .
-endfm)
+endfm
 
-(fmod PRIVILEGE is
+fmod PRIVILEGE is
   pr QUEUE .
   pr ARRAY .
   sort Privilege .
@@ -82,17 +83,17 @@ endfm)
   var A : Array .
   eq q(priv(Q,A)) = Q .
   eq ln(priv(Q,A)) = A .
-endfm)
+endfm
 
-(fmod MESSAGE is
+fmod MESSAGE is
   pr REQUEST .
   pr PRIVILEGE .
   sort Message .
   op msg : NodeID Request -> Message [ctor] .
   op msg : NodeID Privilege -> Message [ctor] .
-endfm)
+endfm
 
-(fmod NETWORK is
+fmod NETWORK is
   pr MESSAGE .
   sort Network .
   subsort Message < Network .
@@ -106,14 +107,14 @@ endfm)
   eq M \in N = false [owise] .
   eq del((M N),M) = N .
   eq del(N,M) = N [owise] .
-endfm)
+endfm
 
-(fmod LABEL is
+fmod LABEL is
   sort Label .
   ops rem l1 l2 l3 l4 l5 cs l6 l7 l8 l9 l10 : -> Label [ctor] .
-endfm)
+endfm
 
-(fmod TRAN is
+fmod TRAN is
   pr NODEID .
   sort Tran .
   op notran : -> Tran [ctor] .
@@ -130,11 +131,10 @@ endfm)
   op transferPriv : NodeID -> Tran [ctor] .
   op resetReq : NodeID -> Tran [ctor] .
   op receiveReq : NodeID -> Tran [ctor] .
-endfm)
+endfm
 
 
-
-(fmod OCOM is
+fmod OCOM is
     pr NETWORK .
     pr LABEL .
     pr TRAN .
@@ -148,18 +148,17 @@ endfm)
     op queue`[_`]:_      : NodeID Queue -> OCom .
     op idx`[_`]:_        : NodeID NzNat -> OCom .
     op nw:_            : Network      -> OCom .
-endfm)
-
+endfm
 
     
-(fmod CONFIG is
+fmod CONFIG is
     pr OCOM .
     sort Config .
     subsort OCom < Config .
     op __ : Config Config -> Config [ctor assoc comm] .
-endfm)
+endfm
 
-(fmod INIT-CONFIG is
+fmod INIT-CONFIG is
     pr CONFIG .
     op node : NodeID -> Config .
     op ic : -> Config .
@@ -173,9 +172,9 @@ endfm)
         (queue[I]: empty)
         (idx[I]: 1) .
     eq ic = node(1) node(2) node(3) (nw: void) .
-endfm)
+endfm
     
-(mod SK is
+mod SK is
     pr CONFIG .
     --- Maude variables
     vars I J : NodeID . 
@@ -307,9 +306,10 @@ endfm)
     if I =/= J /\ L =/= l10 /\ L =/= l8 /\ L =/= l7 /\
        Max := if (RN[J]) < X then X else RN[J] fi /\
        C := F' and not(F) and Max == (LN[J]) + 1  [metadata "just(I)"] .
-endm)
+endm
 
 
+load ltlr-interface
 
 (mod SK-PROP is
     pr SK .
@@ -326,6 +326,7 @@ endm)
     eq (pc[I]: cs) C |= crit(I) = true .
     eq C |= PR = false [owise] .
 endm)
+
     
 (mod SK-FORMULA is
     pr SK-PROP .
@@ -343,11 +344,13 @@ endm)
         (want(3) |-> crit(3)) .
 endm)
     
-eof
-    
+set verbose on .
+
 *** do model checking in Full maude
 *** for safety property mutual exclusion 
 (mc ic |= mutex .)
     
+
 *** for liveness property : lock freedom 
 (mc ic |=f lofree .)
+

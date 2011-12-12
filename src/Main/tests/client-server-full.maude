@@ -1,9 +1,7 @@
 
---- Full-Maude interface to generate proof-term signature
-load ltlr-interface
 
 --- client-server model
-(mod CLIENT-SERVER is
+mod CLIENT-SERVER is
     protecting NAT .
     sorts Oid Nat? Cnts Conf .
     subsort Nat < Nat? .
@@ -25,18 +23,23 @@ load ltlr-interface
     var W : Nat? .  var CNT : Cnts . 
 
     rl [req] : [C,S,N,nil] => [C,S,N,nil] (S <- {C,N}) 
-         [metadata "req ; just(C)"] .
+         [metadata "just(C)"] .
     rl [reply] : (S <- {C,N}) [S] => [S] (C <- {S,f(S,C,N)}) 
          [metadata "fair(S,C)"] .
-    rl [rec] : (C <- {S,M}) [C,S,N,W] => [C,S,N,M] [metadata "fair(C)"] .
+    rl [rec] : (C <- {S,M}) [C,S,N,W] => [C,S,N,M] [metadata "rec ; fair(C)"] .
     rl [dupl] : (I <- CNT) => (I <- CNT) (I <- CNT)  .
     rl [loss] : I <- CNT => null  .
 
+***(
 --- test ops
     op _##_ : Conf Conf -> Conf [ctor assoc] .
     op t1 : Conf Nat -> Conf [ctor] .
     op t2 : Cnts -> Cnts [ctor] .
-endm)
+***)
+endm
+
+--- Full-Maude interface for LTLR model checknig under parameterized fairness
+load ltlr-interface
 
 (mod CLIENT-SERVER-CHECK is
   inc CLIENT-SERVER .
@@ -58,23 +61,25 @@ endm)
 set verbose on .
 
 --- syntax error
+***(
 (mc in AT : 1 |= 1 .)
 (mc in NAT : asd |= 1 .)
 (mc in NAT : 1 |= asdg .)
+***)
 
-(mc init |= <> rec(b) .)
+(mc init |= <> rec .)
 
-(fmc init |= <> rec(b) under
+(fmc init |= <> rec under
     (just : enabled(req(b)) => req(b)) ;
     (just : enabled(reply(a,b)) => reply(a,b)) ;
     (just : enabled(rec(b)) => rec(b))
 .)
 
-(fmc init |= <> rec(b) under
+(fmc init |= <> rec under
     (just : enabled(req(b)) => req(b)) ;
     (fair : enabled(reply(a,b)) => reply(a,b)) ;
     (fair : enabled(rec(b)) => rec(b))
 .)
 
-(mc init |=f <> rec(b) .)
+(mc init |=f <> rec .)
 
