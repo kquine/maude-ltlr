@@ -161,6 +161,20 @@ fmod LTLR-COUNTEREXAMPLE is
   op nil : -> TransitionList [ctor] .
   op __ : TransitionList TransitionList -> TransitionList [ctor assoc id: nil] .
   op counterexample : TransitionList TransitionList -> ModelCheckResult [ctor] .
+
+  var S : State . var R : RuleName . var SS : StateSubstitution .
+  var C : StateContext .
+
+--- for simplified counterexample
+  op {_} : RuleName -> ProofTerm [ctor format (c! r c! o)] .
+  op {_:_} : RuleName StateSubstitution -> ProofTerm [ctor format (c! r c y? c! o)] .
+  op {_|_} : StateContext RuleName -> ProofTerm 
+     [ctor format (c! o c r c! o)] .
+
+  eq {S, {noContext | R : SS}}     = {S, {R : SS}} .
+  eq {S, {R : noSubstitution}}     = {S, {R}} .
+  eq {S, {C | R : noSubstitution}} = {S, {C | R}} .
+  eq {S, {noContext | R}}          = {S, {R}} .
 endfm
 
 fmod RULENAME-COUNTEREXAMPLE is

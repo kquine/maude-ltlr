@@ -53,8 +53,7 @@ endm)
 
 (mod PHILO-CHECK is
   inc PHILO .
-  pr SATISFACTION .
-  pr LTL .
+  pr LTLR-CHECKER .
 
   vars P Q N C : Nat .  var I J : NzNat . var CF : Conf .
 

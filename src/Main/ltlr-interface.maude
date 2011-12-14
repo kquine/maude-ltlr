@@ -443,7 +443,7 @@ fmod TLR-ENABLED-PATTERN-GENERATE is
  ceq evalEnbFreePat(M, (op F : TYL -> TY [AtS] .) ODS, EP)
    = (# F[VL] : TY enables action(EP) with enbFreeRhs(VL,NTYS) if nil .),
      evalEnbFreePat(M, ODS, EP) 
-   if NTYS := greaterTypeSet(M, type(EP), TYL) 
+   if NTYS := sameKindSet(M, type(EP), TYL) 
    /\ VL := fresh(mkVar(1,TYL), vars(action(EP))) .
   eq evalEnbFreePat(M, ODS, EP) = empty [owise] .
   eq evalEnbFreePat(M, ODS, empty) = empty .
@@ -460,7 +460,7 @@ fmod TLR-ENABLED-PATTERN-GENERATE is
    = exEnbAssocPat(M, ODS, EP), exEnbAssocPat(M, ODS, NEPS) .
  ceq exEnbAssocPat(M, (op F : TYL -> TY [assoc AtS] .) ODS, EP)
    = caseExAssoc(M, F, TY, AtS, EP), exEnbAssocPat(M, ODS, EP)
-   if NTYS := greaterTypeSet(M, type(EP), TYL) .
+   if NTYS := sameKindSet(M, type(EP), TYL) .
   eq exEnbAssocPat(M, ODS, EP) = EP [owise] .
   eq exEnbAssocPat(M, ODS, empty) = empty .
 
@@ -469,7 +469,7 @@ fmod TLR-ENABLED-PATTERN-GENERATE is
   eq caseExAssoc(M, F, TY, comm AtS, EP)
    = mkExEnablePat(M, F[mkFVar(getKind(M,TY),EP),lhs(EP)],TY,EP) .
   eq caseExAssoc(M, F, TY, AtS, EP)
-   = caseExNCA(M, F, TY, mkFVar(getKind(M,TY) getKind(M,TY),EP), AtS, EP) .
+   = caseExNCA(M, F, TY, mkFVar(getKind(M,TY) getKind(M,TY),EP), AtS, EP) [owise] .
 
 --- fresh vars for EnablePat
   op mkFVar : TypeList EnablePat ~> TermList .
@@ -717,11 +717,11 @@ fmod TLR-BASIC-MODULE-GENERATE is
   vars DCL1 DCL2 DCL3 : DeclResult .
   var IPR : IntprtResult .  var EPS : Set{EnablePat} . 
 
-  op PROOF`[_`] : ModuleExpression -> ModuleExpression .
+  op ACTION`[_`] : ModuleExpression -> ModuleExpression .
 
   op basicPatternMod : Module ~> Module .
  ceq basicPatternMod(M)
-   = (mod PROOF[getName(M)] is
+   = (mod ACTION[getName(M)] is
        including getName(M) .
        including 'LTLR-MODEL-CHECKER .
        sorts none .
@@ -755,7 +755,7 @@ fmod TLR-FAIR-MODULE-GENERATE is
  ceq fairMod(M)
    = (mod FAIR[getName(M)] is
        including 'EXT-BOOL .
-       including PROOF[getName(M)] .
+       including ACTION[getName(M)] .
        sorts none .
        none
        ops(DCL2) ops(DCL3) 
@@ -810,7 +810,7 @@ endfm
 ***       Full Maude Functions
 ******************************************************************************
 
-fmod TLR-PROOF-EXPR is
+fmod TLR-ACTION-EXPR is
   pr INST-EXPR-EVALUATION .
   pr EVALUATION . 
   pr MOD-EXP-PARSING .
@@ -825,39 +825,39 @@ fmod TLR-PROOF-EXPR is
   vars MNS MNS' MNS'' MNS3 MNS4 : Set{ModuleName} .
   var MIS : Set{ModuleInfo} .  var VIS : Set{ViewInfo} .
 
- ceq evalModExp(PROOF[ME], PDL, DB)  
-   = if unitInDb(PROOF[ME'], DB1)
-     then < DB1 ; PROOF[ME'] > 
-     else < evalModule(basicPatternMod(M), none, DB1) ; PROOF[ME'] >
+ ceq evalModExp(ACTION[ME], PDL, DB)  
+   = if unitInDb(ACTION[ME'], DB1)
+     then < DB1 ; ACTION[ME'] > 
+     else < evalModule(basicPatternMod(M), none, DB1) ; ACTION[ME'] >
      fi
     if < DB1 ; ME' > := evalModExp(ME, PDL, DB)
     /\ M := getFlatModule(ME',DB1) .
 
-  eq parseModExp('PROOF`[_`][T]) = PROOF[parseModExp(T)] . 
+  eq parseModExp('ACTION`[_`][T]) = ACTION[parseModExp(T)] . 
 
-  eq solveUps('upModule['PROOF`[_`][T]], DB)
-   = solveUpsModExp('upModule['PROOF`[_`][T]], DB) .
-  eq solveUps('upTerm['PROOF`[_`][T], 'bubble[T2]], DB)
-   = solveUpsModExp('upTerm['PROOF`[_`][T], 'bubble[T2]], DB) .
+  eq solveUps('upModule['ACTION`[_`][T]], DB)
+   = solveUpsModExp('upModule['ACTION`[_`][T]], DB) .
+  eq solveUps('upTerm['ACTION`[_`][T], 'bubble[T2]], DB)
+   = solveUpsModExp('upTerm['ACTION`[_`][T], 'bubble[T2]], DB) .
 
-  eq labelInModExp(X, PROOF[ME]) = labelInModExp(X, ME) . 
+  eq labelInModExp(X, ACTION[ME]) = labelInModExp(X, ME) . 
 
-  eq header2Qid(PROOF[ME]) = qid("PROOF[" + string(header2Qid(ME)) + "]") .
-  eq header2QidList(PROOF[ME]) = ('PROOF '`[ header2QidList(ME) '`]) .
+  eq header2Qid(ACTION[ME]) = qid("ACTION[" + string(header2Qid(ME)) + "]") .
+  eq header2QidList(ACTION[ME]) = ('ACTION '`[ header2QidList(ME) '`]) .
 
-  eq prepModExp(PROOF[ME], VEPS) = PROOF[prepModExp(ME, VEPS)] .
+  eq prepModExp(ACTION[ME], VEPS) = ACTION[prepModExp(ME, VEPS)] .
 
-  eq setUpModExpDeps(PROOF[ME], 
+  eq setUpModExpDeps(ACTION[ME], 
       db(< ME ; DT ; U ; U' ; M ; VDS ; MNS ; VES > MIS,
          MNS', VIS, VES', MNS'', MNS3, MNS4, QIL))
-   = db(< ME ; DT ; U ; U' ; M ; VDS ; MNS . PROOF[ME] ; VES > MIS,
+   = db(< ME ; DT ; U ; U' ; M ; VDS ; MNS . ACTION[ME] ; VES > MIS,
          MNS', VIS, VES', MNS'', MNS3, MNS4, QIL) .
-  eq setUpModExpDeps(PROOF[ME], 
+  eq setUpModExpDeps(ACTION[ME], 
       db(< ME ; DM ; U ; U' ; M ; VDS ; MNS ; VES > MIS,
          MNS', VIS, VES', MNS'', MNS3, MNS4, QIL))
-   = db(< ME ; DM ; U ; U' ; M ; VDS ; MNS . PROOF[ME] ; VES > MIS,
+   = db(< ME ; DM ; U ; U' ; M ; VDS ; MNS . ACTION[ME] ; VES > MIS,
          MNS', VIS, VES', MNS'', MNS3, MNS4, QIL) .
- ceq setUpModExpDeps(PROOF[ME], DB)
+ ceq setUpModExpDeps(ACTION[ME], DB)
    = warning(DB, '\r 'Error: '\o 'Module header2QidList(ME) 
                      'not 'in 'database. '\n)
    if not unitInDb(ME, DB) .
@@ -1012,7 +1012,7 @@ fmod MOD-EXPRS is
   op POWER`[_`] : @Token@ -> @ModExp@ .
   op _+_ : @ModExp@ @ModExp@ -> @ModExp@ [assoc prec 42] .
 
-  op PROOF`[_`]   : @ModExp@ -> @ModExp@ . --- NEW: basic proof terms 
+  op ACTION`[_`]   : @ModExp@ -> @ModExp@ . --- NEW: basic proof terms 
   op FAIR`[_`]    : @ModExp@ -> @ModExp@ . --- NEW: fairness
   op CONTEXT`[_`] : @ModExp@ -> @ModExp@ . --- NEW: context module
 
@@ -1048,7 +1048,7 @@ endfm
 
 fmod TLR-COMMAND-PROCESSING is
   pr COMMAND-PROCESSING .
-  pr TLR-PROOF-EXPR .
+  pr TLR-ACTION-EXPR .
   pr TLR-FAIR-EXPR .
 
   vars T T1 T2 T3 : Term .  
@@ -1092,20 +1092,20 @@ fmod TLR-COMMAND-PROCESSING is
    if B  := included('META-MODULE, getImports(getTopModule(ME,DB)), DB)
    /\ TM := solveBubblesRed(T, M, B, VDS, DB) .	--- 'in MOD : " part
 
-  --- extra arguments will be parsed under PROOF[ME]
+  --- extra arguments will be parsed under ACTION[ME]
  ceq procTlrComd(TL, F, T, ME, M, VDS, DB)
    = if parseTerms(TL, M1, VDS, DB1):: TermList
      then procTlrMC(F[T,parseTerms(TL,M1,VDS,DB1)], ME, M1, VDS, DB1)
      else << DB1 ; getMsg(parseTerms(TL,M1,VDS,DB1)) >> 
      fi 
-  if < DB1 ; ME1 > := evalModExp(PROOF[ME], DB) 
+  if < DB1 ; ME1 > := evalModExp(ACTION[ME], DB) 
   /\ M1 := getFlatModule(ME1, DB1) .
 
   eq procTlrComd(T, ME, unitError(QIL), VDS, DB) = << DB ; QIL >> .
   eq procTlrComd(T, ME, M, VDS, DB) 
    = << DB ; ('\r 'Error: '\o 'unknown 'TLR 'command '\n) >> [owise] .
   eq procTlrComd(TL, F, T, ME, M, VDS, DB) 
-   = << DB ; ('\r 'Error: '\o 'cannot 'create header2QidList(PROOF[ME])  '\n) >> [owise] .
+   = << DB ; ('\r 'Error: '\o 'cannot 'create header2QidList(ACTION[ME])  '\n) >> [owise] .
 
 --- process tlr model-checking commands
  ceq procTlrMC('mc_|=_.[T1,T2], ME, M, VDS, DB)   --- no fairness
@@ -1113,7 +1113,8 @@ fmod TLR-COMMAND-PROCESSING is
      then << DB ; 
              ('\b 'ltlr 'model 'check 'in 
               '\o eMetaPrettyPrint(ME) '\b ': '\o '\n '\s '\s
-              eMetaPrettyPrint(M,T1) '\b '|= '\o eMetaPrettyPrint(M,T2) '\n 
+              eMetaPrettyPrint(M,T1) '\b '\s '|= '\s '\o 
+              eMetaPrettyPrint(M,T2) '\n 
               '\b 'result '\o '\s 
               eMetaPrettyPrint(getType(RP?))
               '\s '\b ': '\o '\n '\s '\s 
@@ -1126,9 +1127,10 @@ fmod TLR-COMMAND-PROCESSING is
  ceq procTlrMC('mc_|=f_.[T1,T2], ME, M, VDS, DB)   --- param fairness
    = if RP? :: ResultPair
      then << DB1 ; 
-             ('\b 'ltlr 'model 'check 'in 
+             ('\b 'ltlr 'model 'check 'under 'localized 'fairness 'in 
               '\o eMetaPrettyPrint(ME) '\b ': '\o '\n '\s '\s
-              eMetaPrettyPrint(M,T1) '\b '|=f '\o eMetaPrettyPrint(M,T2) '\n 
+              eMetaPrettyPrint(M,T1) '\b '\s '|= '\s '\o 
+              eMetaPrettyPrint(M,T2) '\n 
               '\b 'result '\o '\s 
               eMetaPrettyPrint(getType(RP?))
               '\s '\b ': '\o '\n '\s '\s 
@@ -1146,7 +1148,8 @@ fmod TLR-COMMAND-PROCESSING is
      then << DB1 ; 
              ('\b 'ltlr 'model 'check 'in 
               '\o eMetaPrettyPrint(ME) '\b ': '\o '\n '\s '\s
-              eMetaPrettyPrint(M,T1) '\b '|= '\o eMetaPrettyPrint(M,T2) '\n 
+              eMetaPrettyPrint(M,T1) '\b '\s '|= '\s '\o 
+              eMetaPrettyPrint(M,T2) '\n 
 	      '\b 'under 'fairness ': '\o '\n '\s '\s
 	      eMetaPrettyPrint(M,T3) '\n
               '\b 'result '\o '\s 
@@ -1163,9 +1166,10 @@ fmod TLR-COMMAND-PROCESSING is
  ceq procTlrMC('fmc_|=f_under_.[T1,T2,T3], ME, M, VDS, DB)  --- param&ground
    = if RP? :: ResultPair
      then << DB1 ; 
-             ('\b 'ltlr 'model 'check 'in 
+             ('\b 'ltlr 'model 'check 'under 'localized 'fairness 'in 
               '\o eMetaPrettyPrint(ME) '\b ': '\o '\n '\s '\s
-              eMetaPrettyPrint(M,T1) '\b '|=f '\o eMetaPrettyPrint(M,T2) '\n 
+              eMetaPrettyPrint(M,T1) '\b '\s '|= '\s '\o 
+              eMetaPrettyPrint(M,T2) '\n 
 	      '\b 'under 'fairness ': '\o '\n '\s '\s
 	      eMetaPrettyPrint(M,T3) '\n
               '\b 'result '\o '\s 

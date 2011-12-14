@@ -26,7 +26,7 @@ mod CLIENT-SERVER is
          [metadata "just(C)"] .
     rl [reply] : (S <- {C,N}) [S] => [S] (C <- {S,f(S,C,N)}) 
          [metadata "fair(S,C)"] .
-    rl [rec] : (C <- {S,M}) [C,S,N,W] => [C,S,N,M] [metadata "rec ; fair(C)"] .
+    rl [rec] : (C <- {S,M}) [C,S,N,W] => [C,S,N,M] [metadata "rec; fair(C)"] .
     rl [dupl] : (I <- CNT) => (I <- CNT) (I <- CNT)  .
     rl [loss] : I <- CNT => null  .
 
