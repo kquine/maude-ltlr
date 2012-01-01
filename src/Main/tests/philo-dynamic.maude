@@ -3,13 +3,16 @@ load ltlr-interface
 
 (mod PHILO is pr NAT .
 
+  --- philosopher
   sorts Philo Status .
   op ph : Nat Status Nat -> Philo [ctor] .
   ops think hungry : -> Status [ctor] .
 
+  --- chopstick
   sort Chopstick .
   op stk : Nat -> Chopstick [ctor] .
 
+  --- configuration
   sort Conf .
   subsorts Philo Chopstick < Conf .
   op none : -> Conf [ctor] .
@@ -47,8 +50,6 @@ load ltlr-interface
 
   rl [leave]: < P, s s s N, CF ; ph(s s s N, think, 0) ; stk(s s s N) > 
            => < P, s s N, CF > .
-
-  --- initial state
 endm)
 
 (mod PHILO-CHECK is
