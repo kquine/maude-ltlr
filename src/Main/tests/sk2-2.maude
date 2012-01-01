@@ -352,5 +352,5 @@ set verbose on .
     
 
 *** for liveness property : lock freedom 
-(mc ic |=f lofree .)
+(pfmc ic |= lofree .)
 

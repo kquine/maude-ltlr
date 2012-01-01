@@ -977,23 +977,17 @@ endfm
 fmod BANNER is
   pr STRING .
   op banner : -> String .
-  eq banner = "LTLR Fairness Model Checker September 27th 2011" .
+  eq banner = "LTLR Fairness Model Checker December 10th 2011" .
 endfm
 
 fmod TLR-COMMANDS is
   inc COMMANDS .
 
   --- no fairness
-  op mc_|=_. : @Bubble@ @Bubble@ -> @Command@ .  
-
-  --- only ground fairness
-  op fmc_|=_under_. : @Bubble@ @Bubble@ @Bubble@ -> @Command@ .
+  op mc_|=_. : @Bubble@ @Bubble@ -> @Command@ [ctor] .
 
   --- param fairness
-  op mc_|=f_. : @Bubble@ @Bubble@ -> @Command@ .
-
-  --- param and ground fairness
-  op fmc_|=f_under_. : @Bubble@ @Bubble@ @Bubble@ -> @Command@ .
+  op pfmc_|=_. : @Bubble@ @Bubble@ -> @Command@ [ctor] .
 endfm
 
 --- REDEFINED: frequently used as meta functions in many cases.
@@ -1064,51 +1058,104 @@ fmod TLR-COMMAND-PROCESSING is
   var  TM : [Tuple{Term,Module,Bool,OpDeclSet,Database}] .
   var  RP? : [ResultPair] .
 
+--- process tlr commands (parse arguments)
   op procTlrComd : Term ModuleExpression Database -> Tuple{Database,QidList} .
-  op procTlrComd : Term ModuleExpression Module OpDeclSet Database -> Tuple{Database,QidList} .
-  op procTlrComd : TermList Qid Term ModuleExpression Module OpDeclSet Database -> Tuple{Database,QidList} .
-
-  op procTlrMC : Term ModuleExpression Module OpDeclSet Database -> Tuple{Database,QidList} .
-
---- process tlr commands
-  eq procTlrComd(T, ME, DB)
+ ceq procTlrComd(F[TL], ME, DB)
    = if compiledModule(ME, DB)
-     then procTlrComd(T, ME, getFlatModule(ME,DB), getVars(ME,DB), DB)
-     else procTlrComd(T, modExp(evalModExp(ME,DB)), 
+     then procTlrComd(F,TL,ME,getFlatModule(ME,DB),B,getVars(ME,DB),DB,empty)
+     else procTlrComd(F, TL,
+                      modExp(evalModExp(ME,DB)),
                       getFlatModule(modExp(evalModExp(ME,DB)),
-		                    database(evalModExp(ME,DB))),
-		      getVars(modExp(evalModExp(ME,DB)), 
-		              database(evalModExp(ME,DB))), 
-		      database(evalModExp(ME,DB)))
-     fi .
+                                    database(evalModExp(ME,DB))), B,
+                      getVars(modExp(evalModExp(ME,DB)),
+                              database(evalModExp(ME,DB))),
+                      database(evalModExp(ME,DB)), empty)
+     fi
+  if B  := included('META-MODULE, getImports(getTopModule(ME,DB)), DB) .
 
---- parse terms in the commands
- ceq procTlrComd(F[T,TL], ME, M, VDS, DB)
+--- parse arguments
+  op procTlrComd : Qid TermList ModuleExpression Module Bool OpDeclSet 
+                Database TermList -> Tuple{Database,QidList} .
+
+  eq procTlrComd(F, TL, ME, unitError(QIL), B, VDS, DB, TL1) = << DB ; QIL >> .
+
+  --- the first argument
+  --- NOTE: the first argument is parsed uder ME, but 
+  ---       the other arguments will be parsed under ACTION[ME]
+ ceq procTlrComd(F, (T,TL), ME, M, B, VDS, DB, empty)
    = if getModule(TM) :: Module and-then getTerm(TM) :: Term 
-     then procTlrComd(TL, F, getTerm(TM), getName(getModule(TM)),
-                      getModule(TM), getVars(TM), getDatabase(TM))
+     then procTlrComdAux(F, TL, getName(getModule(TM)), getModule(TM),
+                    B, getVars(TM), DB, getTerm(TM))
      else << DB ; getMsg(getTerm(metaReduce(getModule(TM), getTerm(TM)))) >>
      fi
-   if B  := included('META-MODULE, getImports(getTopModule(ME,DB)), DB)
-   /\ TM := solveBubblesRed(T, M, B, VDS, DB) .	--- 'in MOD : " part
+   if TM := solveBubblesRed(T, M, B, VDS, DB) . --- 'in MOD : " part
 
-  --- extra arguments will be parsed under ACTION[ME]
- ceq procTlrComd(TL, F, T, ME, M, VDS, DB)
-   = if parseTerms(TL, M1, VDS, DB1):: TermList
-     then procTlrMC(F[T,parseTerms(TL,M1,VDS,DB1)], ME, M1, VDS, DB1)
-     else << DB1 ; getMsg(parseTerms(TL,M1,VDS,DB1)) >> 
-     fi 
-  if < DB1 ; ME1 > := evalModExp(ACTION[ME], DB) 
-  /\ M1 := getFlatModule(ME1, DB1) .
+  op procTlrComdAux : Qid TermList ModuleExpression Module Bool OpDeclSet 
+                Database TermList -> Tuple{Database,QidList} .
+ ceq procTlrComdAux(F, TL, ME, M, B, VDS, DB, TL1)
+   = procTlrComd(F, TL, ME, M1, B, VDS, DB1, TL1)
+  if < DB1 ; ME1 > := evalModExp(ACTION[ME],DB) 
+  /\ M1 := getFlatModule(ACTION[ME],DB1) .
 
-  eq procTlrComd(T, ME, unitError(QIL), VDS, DB) = << DB ; QIL >> .
-  eq procTlrComd(T, ME, M, VDS, DB) 
-   = << DB ; ('\r 'Error: '\o 'unknown 'TLR 'command '\n) >> [owise] .
-  eq procTlrComd(TL, F, T, ME, M, VDS, DB) 
+  eq procTlrComdAux(F, TL, ME, M, B, VDS, DB, TL1)
    = << DB ; ('\r 'Error: '\o 'cannot 'create header2QidList(ACTION[ME])  '\n) >> [owise] .
 
+
+ --- intermediate arguments
+ ceq procTlrComd(F, (T1,T2,TL), ME, M, B, VDS, DB, TL1)
+   = if T?:[Term] :: Term
+     then procTlrComd(F, (T2,TL), ME, M, B, VDS, DB, (TL1,T?:[Term]))
+     else << DB ; getMsg(T?:[Term]) >> fi
+  if T?:[Term] := solveBubbles(T1,M,B,VDS,DB) .
+
+ --- the last argument (no condition)
+ ceq procTlrComd(F, 'bubble[QI], ME, M, B, VDS, DB, TL1)
+   = if T?:[Term] :: Term
+     then procTlrMC(F[TL1,T?:[Term]], 'noFairness.FairnessSet, ME, M, VDS, DB)
+     else << DB ; getMsg(T?:[Term]) >> fi
+  if T?:[Term] := solveBubbles('bubble[QI],M,B,VDS,DB) .
+
+ --- the last argument (may have condition)
+ ceq procTlrComd(F, 'bubble['__[TL]], ME, M, B, VDS, DB, TL1)
+   = if T?:[Term] :: Term
+     then procTlrMC(F[TL1,T?:[Term]], 'noFairness.FairnessSet, ME, M, VDS, DB)
+     else parseTlrCondArg1(F,'bubble['__[TL]], ME, M, VDS, DB, TL1)
+     fi
+  if T?:[Term] := solveBubbles('bubble['__[TL]], M, B, VDS, DB) .
+
+
+ --- the last argument (with condition)
+  op parseTlrCondArg1 : Qid Term ModuleExpression Module OpDeclSet 
+                   Database TermList -> Tuple{Database,QidList} .
+  op parseTlrCondArg2 : Qid Term ModuleExpression Module OpDeclSet 
+                   Database TermList -> Tuple{Database,QidList} .
+
+ ceq parseTlrCondArg1(F, 'bubble['__[TL]], ME, M, VDS, DB, TL1)
+   = if RP? :: ResultPair
+     then parseTlrCondArg2(F, getTerm(RP?), ME, M, VDS, DB, TL1)
+     else << DB ; ('\r 'Error: '\o 'no 'parse 'for
+                    downQidList('__[TL,''..Qid]) '\n) >> fi
+  if M1 := addOps(
+       op '_under_. : 'Formula 'FairnessSet -> '@FormulaWithFair@ [prec(122)] .,
+       addSorts('@FormulaWithFair@, M))
+  /\ RP? := metaParse(M1, downQidList('__[TL,''..Qid]), '@FormulaWithFair@) .
+
+  eq parseTlrCondArg2(F, QI[T1,T2], ME, M, VDS, DB, TL1)
+    = if QI == '_under_.
+      then procTlrMC(F[TL1,T1] ,T2, ME, M, VDS, DB)
+      else procTlrMC(F[TL1,constsToVars(QI[T1,T2],VDS)], 
+                     'noFairness.FairnessSet, ME, M, VDS, DB)
+      fi .
+  eq parseTlrCondArg2(F, T, ME, M, VDS, DB, TL1)
+   = procTlrMC(F[TL1,constsToVars(T,VDS)],'noFairness.FairnessSet,ME,M,VDS,DB) 
+  [owise] .
+
+
 --- process tlr model-checking commands
- ceq procTlrMC('mc_|=_.[T1,T2], ME, M, VDS, DB)   --- no fairness
+  op procTlrMC : Term Term ModuleExpression Module OpDeclSet Database -> Tuple{Database,QidList} .
+
+  --- no fairness
+ ceq procTlrMC('mc_|=_.[T1,T2], 'noFairness.FairnessSet, ME, M, VDS, DB)   
    = if RP? :: ResultPair
      then << DB ; 
              ('\b 'ltlr 'model 'check 'in 
@@ -1119,86 +1166,81 @@ fmod TLR-COMMAND-PROCESSING is
               eMetaPrettyPrint(getType(RP?))
               '\s '\b ': '\o '\n '\s '\s 
               eMetaPrettyPrint(M, getTerm(RP?)) '\n) >>
-     else << DB ; getMsg(getTerm(RP?)) >>
+     else << DB ; normMsg(getMsg(getTerm(RP?))) >>
      fi 
-   if RP? := metaReduce(M,'modelCheckParamFair[T1,T2,
-               'noFairness.FairnessSet,'noParam.FairFlag]) .
+   if RP? := metaReduce(M,'modelCheckParamFair[T1,T2,'noFairness.FairnessSet,
+                                               'noParam.FairFlag]) .
 
- ceq procTlrMC('mc_|=f_.[T1,T2], ME, M, VDS, DB)   --- param fairness
+ ceq procTlrMC('mc_|=_.[T1,T2], QI[TL], ME, M, VDS, DB)  --- only ground fair
    = if RP? :: ResultPair
-     then << DB1 ; 
-             ('\b 'ltlr 'model 'check 'under 'localized 'fairness 'in 
-              '\o eMetaPrettyPrint(ME) '\b ': '\o '\n '\s '\s
-              eMetaPrettyPrint(M,T1) '\b '\s '|= '\s '\o 
-              eMetaPrettyPrint(M,T2) '\n 
-              '\b 'result '\o '\s 
-              eMetaPrettyPrint(getType(RP?))
-              '\s '\b ': '\o '\n '\s '\s 
-              eMetaPrettyPrint(M2, getTerm(RP?))
-              '\n) >>
-     else << DB ; getMsg(getTerm(RP?)) >>
-     fi
-   if < DB1 ; ME1 > := evalModExp(FAIR[ME], DB)
-   /\ M2 := getFlatModule(FAIR[ME], DB1) 
-   /\ RP? := metaReduce(M2,'modelCheckParamFair[T1,T2,
-               'noFairness.FairnessSet,'#param#flag#.FairFlag]) .
-
- ceq procTlrMC('fmc_|=_under_.[T1,T2,T3], ME, M, VDS, DB)   --- ground fairness
-   = if RP? :: ResultPair
-     then << DB1 ; 
+     then << DB ; 
              ('\b 'ltlr 'model 'check 'in 
               '\o eMetaPrettyPrint(ME) '\b ': '\o '\n '\s '\s
               eMetaPrettyPrint(M,T1) '\b '\s '|= '\s '\o 
               eMetaPrettyPrint(M,T2) '\n 
-	      '\b 'under 'fairness ': '\o '\n '\s '\s
-	      eMetaPrettyPrint(M,T3) '\n
+	      '\b 'under 'ground 'fairness ': '\o '\n '\s '\s
+	      eMetaPrettyPrint(M,QI[TL]) '\n
               '\b 'result '\o '\s 
               eMetaPrettyPrint(getType(RP?))
               '\s '\b ': '\o '\n '\s '\s 
-              eMetaPrettyPrint(M2, getTerm(RP?))
-              '\n) >>
-     else << DB ; getMsg(getTerm(RP?)) >>
-     fi
+              eMetaPrettyPrint(M, getTerm(RP?)) '\n) >>
+     else << DB ; normMsg(getMsg(getTerm(RP?))) >>
+     fi 
    if < DB1 ; ME1 > := evalModExp(FAIR[ME], DB)
-   /\ M2 := getFlatModule(FAIR[ME], DB1) 
-   /\ RP? := metaReduce(M2,'modelCheckParamFair[T1,T2,T3,'noParam.FairFlag]) .
+   /\ M2 := getFlatModule(FAIR[ME], DB1)
+   /\ RP? := metaReduce(M2,'modelCheckParamFair[T1,T2,QI[TL],
+                                                'noParam.FairFlag]) .
 
- ceq procTlrMC('fmc_|=f_under_.[T1,T2,T3], ME, M, VDS, DB)  --- param&ground
+  --- param fairness
+ ceq procTlrMC('pfmc_|=_.[T1,T2], 'noFairness.FairnessSet, ME, M, VDS, DB)   
    = if RP? :: ResultPair
      then << DB1 ; 
              ('\b 'ltlr 'model 'check 'under 'localized 'fairness 'in 
               '\o eMetaPrettyPrint(ME) '\b ': '\o '\n '\s '\s
               eMetaPrettyPrint(M,T1) '\b '\s '|= '\s '\o 
               eMetaPrettyPrint(M,T2) '\n 
-	      '\b 'under 'fairness ': '\o '\n '\s '\s
-	      eMetaPrettyPrint(M,T3) '\n
               '\b 'result '\o '\s 
               eMetaPrettyPrint(getType(RP?))
               '\s '\b ': '\o '\n '\s '\s 
               eMetaPrettyPrint(M2, getTerm(RP?))
               '\n) >>
-     else << DB ; getMsg(getTerm(RP?)) >>
+     else << DB ; normMsg(getMsg(getTerm(RP?))) >>
      fi
    if < DB1 ; ME1 > := evalModExp(FAIR[ME], DB)
    /\ M2 := getFlatModule(FAIR[ME], DB1) 
-   /\ RP? := metaReduce(M2,'modelCheckParamFair[T1,T2,T3,
+   /\ RP? := metaReduce(M2,'modelCheckParamFair[T1,T2,'noFairness.FairnessSet,
                                                 '#param#flag#.FairFlag]) .
 
+  --- param and ground fairness
+ ceq procTlrMC('pfmc_|=_.[T1,T2], QI[TL], ME, M, VDS, DB)   
+   = if RP? :: ResultPair
+     then << DB1 ; 
+             ('\b 'ltlr 'model 'check 'under 'localized 'fairness 'in 
+              '\o eMetaPrettyPrint(ME) '\b ': '\o '\n '\s '\s
+              eMetaPrettyPrint(M,T1) '\b '\s '|= '\s '\o 
+              eMetaPrettyPrint(M,T2) '\n 
+	      '\b 'under 'ground 'fairness ': '\o '\n '\s '\s
+	      eMetaPrettyPrint(M,QI[TL]) '\n
+              '\b 'result '\o '\s 
+              eMetaPrettyPrint(getType(RP?))
+              '\s '\b ': '\o '\n '\s '\s 
+              eMetaPrettyPrint(M2, getTerm(RP?))
+              '\n) >>
+     else << DB ; normMsg(getMsg(getTerm(RP?))) >>
+     fi
+   if < DB1 ; ME1 > := evalModExp(FAIR[ME], DB)
+   /\ M2 := getFlatModule(FAIR[ME], DB1) 
+   /\ RP? := metaReduce(M2,'modelCheckParamFair[T1,T2,QI[TL],
+                                                '#param#flag#.FairFlag]) .
 
-  eq procTlrMC(T, ME, M, VDS, DB)
-   = << DB ; ('\r 'Error: '\o 'unknown 'TLR 'command '\n) >> [owise] .
+  eq procTlrMC(T, T2, ME, M, VDS, DB)
+   = << DB ; ('\r 'Error: '\o 'unknown 'TLR 'command root(T) '\n) >> [owise] .
 
---- parse terms
-  op parseTerms : TermList Module OpDeclSet Database ~> TermList .
-  op parseTerms : TermList Module Bool OpDeclSet Database TermList ~> TermList .
-  eq parseTerms(TL, M, VDS, DB)
-   = parseTerms(TL, M, included('META-MODULE,getImports(M),DB), VDS,DB,empty) .
-  eq parseTerms((T,TL), M, B, VDS, DB, TL1)
-   = if solveBubbles(T,M,B,VDS,DB) :: Term
-     then parseTerms(TL, M, B, VDS, DB, (TL1,solveBubbles(T,M,B,VDS,DB)))
-     else solveBubbles(T,M,B,VDS,DB)
-     fi .
-  eq parseTerms(empty, M, B, VDS, DB, TL1) = TL1 .
+  --- for some error msg
+  op normMsg : QidList -> QidList .
+  eq normMsg(getMsg(T?:[Term])) 
+   = '\r 'Error: '\o 'model 'checking 'command 'internal 'error '\n .
+  eq normMsg(QIL) = QIL [owise] .
 endfm
 
 mod TLR-DATABASE-HANDLING is
@@ -1220,9 +1262,7 @@ mod TLR-DATABASE-HANDLING is
        output : getQidList(procTlrComd(F[TL], ME, DB)), 
        default : ME, Atts >
   if (F == 'mc_|=_.) or-else
-     (F == 'fmc_|=_under_.) or-else
-     (F == 'mc_|=f_.) or-else
-     (F == 'fmc_|=f_under_.) .
+     (F == 'pfmc_|=_.) .
 
 endm
 

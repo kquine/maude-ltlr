@@ -53,7 +53,7 @@ endm)
 
 (mod PHILO-CHECK is
   inc PHILO .
-  pr LTLR-CHECKER .
+  pr LTLR-MODEL-CHECKER .
 
   vars P Q N C : Nat .  var I J : NzNat . var CF : Conf .
 
@@ -69,6 +69,6 @@ set verbose on .
 
 (mc in PHILO-CHECK : init(5) |= [] ~ deadlock .)
 
-(mc init(6) |=f [] ~ deadlock -> <> eating(1) .)
-(mc init(12) |=f [] ~ deadlock -> <> eating(1) .)
+(pfmc init(6) |= [] ~ deadlock -> <> eating(1) .)
+(pfmc init(12) |= [] ~ deadlock -> <> eating(1) .)
 

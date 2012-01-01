@@ -1,6 +1,7 @@
 
+--- simple client-server model from the following paper:
+--- José Meseguer, The Temporal Logic of Rewriting: A Gentle Introduction, LNCS 5065, 2008
 
---- client-server model
 mod CLIENT-SERVER is
     protecting NAT .
     sorts Oid Nat? Cnts Conf .
@@ -22,20 +23,24 @@ mod CLIENT-SERVER is
     vars C S I : Oid .  vars N M : Nat .
     var W : Nat? .  var CNT : Cnts . 
 
+    --- The followings are the rewriting rules to describe the behaviour
+    --- of this system. The localized fairness for this model is specified
+    --- in the metadata rule attributes.
+
+    --- weak fairness localized to the variable C
     rl [req] : [C,S,N,nil] => [C,S,N,nil] (S <- {C,N}) 
-         [metadata "just(C)"] .
+         [metadata "just(C)"] .  
+
+    --- strong fairness localized to the variables S and C
     rl [reply] : (S <- {C,N}) [S] => [S] (C <- {S,f(S,C,N)}) 
-         [metadata "fair(S,C)"] .
+         [metadata "fair(S,C)"] .  
+
+    --- strong fairness localized to the variable C. In addition,
+    --- the item "rec" is specified to use the action of the form "rec".
     rl [rec] : (C <- {S,M}) [C,S,N,W] => [C,S,N,M] [metadata "rec; fair(C)"] .
+
     rl [dupl] : (I <- CNT) => (I <- CNT) (I <- CNT)  .
     rl [loss] : I <- CNT => null  .
-
-***(
---- test ops
-    op _##_ : Conf Conf -> Conf [ctor assoc] .
-    op t1 : Conf Nat -> Conf [ctor] .
-    op t2 : Cnts -> Cnts [ctor] .
-***)
 endm
 
 --- Full-Maude interface for LTLR model checknig under parameterized fairness
@@ -60,26 +65,23 @@ endm)
 
 set verbose on .
 
---- syntax error
-***(
-(mc in AT : 1 |= 1 .)
-(mc in NAT : asd |= 1 .)
-(mc in NAT : 1 |= asdg .)
-***)
-
+--- false. Note that the action pattern "rec" is defined by the rule attribute.
 (mc init |= <> rec .)
 
-(fmc init |= <> rec under
+--- false. (only for ground weak fairness)
+(mc init |= <> rec under
     (just : enabled(req(b)) => req(b)) ;
     (just : enabled(reply(a,b)) => reply(a,b)) ;
     (just : enabled(rec(b)) => rec(b))
 .)
 
-(fmc init |= <> rec under
+--- true. (ground weak and strong fairness)
+(mc init |= <> rec under
     (just : enabled(req(b)) => req(b)) ;
     (fair : enabled(reply(a,b)) => reply(a,b)) ;
     (fair : enabled(rec(b)) => rec(b))
 .)
 
-(mc init |=f <> rec .)
+--- true. (under strong/weak localized fairness)
+(pfmc init |= <> rec .)
 

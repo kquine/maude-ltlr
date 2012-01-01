@@ -1,4 +1,4 @@
-Terminals unused in grammar
+Terminals which are not used
 
    KW_NORMALIZE
    KW_TIME
@@ -16,27 +16,27 @@ Grammar
     5     | directive
     6     | command
 
-    7 $@1: /* empty */
+    7 @1: /* empty */
 
-    8 directive: KW_IN $@1 FILE_NAME_STRING
+    8 directive: KW_IN @1 FILE_NAME_STRING
 
-    9 $@2: /* empty */
+    9 @2: /* empty */
 
-   10 directive: KW_LOAD $@2 FILE_NAME_STRING
+   10 directive: KW_LOAD @2 FILE_NAME_STRING
    11          | KW_PWD
 
-   12 $@3: /* empty */
+   12 @3: /* empty */
 
-   13 directive: KW_CD $@3 FILE_NAME_STRING
+   13 directive: KW_CD @3 FILE_NAME_STRING
 
-   14 $@4: /* empty */
+   14 @4: /* empty */
 
-   15 directive: KW_PUSHD $@4 FILE_NAME_STRING
+   15 directive: KW_PUSHD @4 FILE_NAME_STRING
    16          | KW_POPD
 
-   17 $@5: /* empty */
+   17 @5: /* empty */
 
-   18 directive: KW_LS $@5 UNINTERPRETED_STRING
+   18 directive: KW_LS @5 UNINTERPRETED_STRING
    19          | KW_QUIT
    20          | KW_EOF
 
@@ -60,20 +60,20 @@ Grammar
 
    35 renameExpr: moduleExpr2 '*' renaming
 
-   36 $@6: /* empty */
+   36 @6: /* empty */
 
-   37 instantExpr: moduleExpr3 '{' $@6 argList '}'
+   37 instantExpr: moduleExpr3 '{' @6 argList '}'
 
    38 parenExpr: '(' moduleExpr ')'
 
    39 argList: argList ',' token
    40        | token
 
-   41 $@7: /* empty */
+   41 @7: /* empty */
 
-   42 $@8: /* empty */
+   42 @8: /* empty */
 
-   43 renaming: '(' $@7 renaming2 $@8 ')'
+   43 renaming: '(' @7 renaming2 @8 ')'
 
    44 renaming2: mappingList
    45          | error
@@ -84,20 +84,20 @@ Grammar
    48 mapping: KW_SORT sortName KW_TO sortName
    49        | KW_LABEL token KW_TO token
 
-   50 $@9: /* empty */
+   50 @9: /* empty */
 
-   51 $@10: /* empty */
+   51 @10: /* empty */
 
-   52 mapping: KW_OP $@9 fromSpec KW_TO $@10 toAttributes
+   52 mapping: KW_OP @9 fromSpec KW_TO @10 toAttributes
 
-   53 $@11: /* empty */
+   53 @11: /* empty */
 
-   54 fromSpec: ':' $@11 typeList arrow typeName
+   54 fromSpec: ':' @11 typeList arrow typeName
    55         | /* empty */
 
-   56 $@12: /* empty */
+   56 @12: /* empty */
 
-   57 toAttributes: '[' $@12 toAttributeList ']'
+   57 toAttributes: '[' @12 toAttributeList ']'
    58             | /* empty */
 
    59 toAttributeList: toAttributeList toAttribute
@@ -105,25 +105,25 @@ Grammar
 
    61 toAttribute: KW_PREC IDENTIFIER
 
-   62 $@13: /* empty */
+   62 @13: /* empty */
 
-   63 toAttribute: KW_GATHER '(' $@13 idList ')'
+   63 toAttribute: KW_GATHER '(' @13 idList ')'
 
-   64 $@14: /* empty */
+   64 @14: /* empty */
 
-   65 toAttribute: KW_FORMAT '(' $@14 idList ')'
+   65 toAttribute: KW_FORMAT '(' @14 idList ')'
 
-   66 $@15: /* empty */
+   66 @15: /* empty */
 
-   67 toAttribute: KW_LATEX '(' $@15 LATEX_STRING ')'
+   67 toAttribute: KW_LATEX '(' @15 LATEX_STRING ')'
 
-   68 $@16: /* empty */
+   68 @16: /* empty */
 
-   69 $@17: /* empty */
+   69 @17: /* empty */
 
-   70 $@18: /* empty */
+   70 @18: /* empty */
 
-   71 view: KW_VIEW $@16 token KW_FROM moduleExpr $@17 KW_TO moduleExpr $@18 expectedIs viewDecList KW_ENDV
+   71 view: KW_VIEW @16 token KW_FROM moduleExpr @17 KW_TO moduleExpr @18 expectedIs viewDecList KW_ENDV
 
    72 viewDecList: viewDecList viewDeclaration
    73            | /* empty */
@@ -134,36 +134,36 @@ Grammar
    76 viewDeclaration: KW_SORT sortName KW_TO sortDot
    77                | KW_VAR varNameList ':' skipStrayArrow typeDot
 
-   78 $@19: /* empty */
+   78 @19: /* empty */
 
-   79 viewDeclaration: KW_OP $@19 viewEndOpMap
+   79 viewDeclaration: KW_OP @19 viewEndOpMap
    80                | error '.'
 
    81 sortDot: sortName expectedDot
    82        | ENDS_IN_DOT
 
-   83 $@20: /* empty */
+   83 @20: /* empty */
 
-   84 $@21: /* empty */
+   84 @21: /* empty */
 
-   85 viewEndOpMap: ':' $@20 typeList arrow typeName KW_TO $@21 endBubble
+   85 viewEndOpMap: ':' @20 typeList arrow typeName KW_TO @21 endBubble
 
-   86 $@22: /* empty */
+   86 @22: /* empty */
 
-   87 viewEndOpMap: KW_TO $@22 endBubble
+   87 viewEndOpMap: KW_TO @22 endBubble
 
    88 endBubble: '.'
    89          | ENDS_IN_DOT
 
-   90 $@23: /* empty */
+   90 @23: /* empty */
 
-   91 parenBubble: '(' $@23 ')'
+   91 parenBubble: '(' @23 ')'
 
-   92 $@24: /* empty */
+   92 @24: /* empty */
 
-   93 $@25: /* empty */
+   93 @25: /* empty */
 
-   94 module: startModule $@24 token $@25 parameters expectedIs decList KW_ENDM
+   94 module: startModule @24 token @25 parameters expectedIs decList KW_ENDM
 
    95 dot: '.'
    96    | ENDS_IN_DOT
@@ -192,78 +192,78 @@ Grammar
 
   111 declaration: KW_IMPORT moduleExprDot
 
-  112 $@26: /* empty */
+  112 @26: /* empty */
 
-  113 declaration: KW_SORT $@26 sortNameList dot
+  113 declaration: KW_SORT @26 sortNameList dot
 
-  114 $@27: /* empty */
+  114 @27: /* empty */
 
-  115 declaration: KW_SUBSORT $@27 subsortList dot
+  115 declaration: KW_SUBSORT @27 subsortList dot
 
-  116 $@28: /* empty */
+  116 @28: /* empty */
 
-  117 $@29: /* empty */
+  117 @29: /* empty */
 
-  118 declaration: KW_OP $@28 ':' $@29 domainRangeAttr
+  118 declaration: KW_OP @28 ':' @29 domainRangeAttr
   119            | KW_OPS opNameList ':' domainRangeAttr
   120            | KW_VAR varNameList ':' skipStrayArrow typeDot
 
-  121 $@30: /* empty */
+  121 @30: /* empty */
 
-  122 $@31: /* empty */
+  122 @31: /* empty */
 
-  123 declaration: KW_MB $@30 ':' $@31 endBubble
+  123 declaration: KW_MB @30 ':' @31 endBubble
 
-  124 $@32: /* empty */
+  124 @32: /* empty */
 
-  125 $@33: /* empty */
+  125 @33: /* empty */
 
-  126 $@34: /* empty */
+  126 @34: /* empty */
 
-  127 declaration: KW_CMB $@32 ':' $@33 KW_IF $@34 endBubble
+  127 declaration: KW_CMB @32 ':' @33 KW_IF @34 endBubble
 
-  128 $@35: /* empty */
+  128 @35: /* empty */
 
-  129 $@36: /* empty */
+  129 @36: /* empty */
 
-  130 declaration: KW_EQ $@35 '=' $@36 endBubble
+  130 declaration: KW_EQ @35 '=' @36 endBubble
 
-  131 $@37: /* empty */
+  131 @37: /* empty */
 
-  132 $@38: /* empty */
+  132 @38: /* empty */
 
-  133 $@39: /* empty */
+  133 @39: /* empty */
 
-  134 declaration: KW_CEQ $@37 '=' $@38 KW_IF $@39 endBubble
+  134 declaration: KW_CEQ @37 '=' @38 KW_IF @39 endBubble
 
-  135 $@40: /* empty */
+  135 @40: /* empty */
 
-  136 $@41: /* empty */
+  136 @41: /* empty */
 
-  137 declaration: KW_RL $@40 KW_ARROW2 $@41 endBubble
+  137 declaration: KW_RL @40 KW_ARROW2 @41 endBubble
 
-  138 $@42: /* empty */
+  138 @42: /* empty */
 
-  139 $@43: /* empty */
+  139 @43: /* empty */
 
-  140 $@44: /* empty */
+  140 @44: /* empty */
 
-  141 declaration: KW_CRL $@42 KW_ARROW2 $@43 KW_IF $@44 endBubble
+  141 declaration: KW_CRL @42 KW_ARROW2 @43 KW_IF @44 endBubble
 
-  142 $@45: /* empty */
+  142 @45: /* empty */
 
-  143 $@46: /* empty */
+  143 @46: /* empty */
 
-  144 declaration: KW_MSG $@45 ':' $@46 domainRangeAttr
+  144 declaration: KW_MSG @45 ':' @46 domainRangeAttr
   145            | KW_MSGS opNameList ':' domainRangeAttr
 
-  146 $@47: /* empty */
+  146 @47: /* empty */
 
-  147 declaration: KW_CLASS token $@47 classDef '.'
+  147 declaration: KW_CLASS token @47 classDef '.'
 
-  148 $@48: /* empty */
+  148 @48: /* empty */
 
-  149 declaration: KW_SUBCLASS $@48 subsortList dot
+  149 declaration: KW_SUBCLASS @48 subsortList dot
   150            | error '.'
 
   151 classDef: '|'
@@ -307,9 +307,9 @@ Grammar
 
   177 typeName: sortName
 
-  178 $@49: /* empty */
+  178 @49: /* empty */
 
-  179 typeName: '[' $@49 sortNames ']'
+  179 typeName: '[' @49 sortNames ']'
 
   180 sortNames: sortNames ',' sortName
   181          | sortName
@@ -327,43 +327,43 @@ Grammar
   189 attribute: KW_ASSOC
   190          | KW_COMM
 
-  191 $@50: /* empty */
+  191 @50: /* empty */
 
-  192 attribute: idKeyword $@50 identity
+  192 attribute: idKeyword @50 identity
   193          | KW_IDEM
   194          | KW_ITER
   195          | KW_PREC IDENTIFIER
 
-  196 $@51: /* empty */
+  196 @51: /* empty */
 
-  197 attribute: KW_GATHER '(' $@51 idList ')'
+  197 attribute: KW_GATHER '(' @51 idList ')'
 
-  198 $@52: /* empty */
+  198 @52: /* empty */
 
-  199 attribute: KW_FORMAT '(' $@52 idList ')'
+  199 attribute: KW_FORMAT '(' @52 idList ')'
 
-  200 $@53: /* empty */
+  200 @53: /* empty */
 
-  201 attribute: KW_STRAT '(' $@53 idList ')'
+  201 attribute: KW_STRAT '(' @53 idList ')'
 
-  202 $@54: /* empty */
+  202 @54: /* empty */
 
-  203 attribute: KW_POLY '(' $@54 idList ')'
+  203 attribute: KW_POLY '(' @54 idList ')'
   204          | KW_MEMO
   205          | KW_CTOR
   206          | KW_FROZEN
 
-  207 $@55: /* empty */
+  207 @55: /* empty */
 
-  208 attribute: KW_FROZEN '(' $@55 idList ')'
+  208 attribute: KW_FROZEN '(' @55 idList ')'
   209          | KW_CONFIG
   210          | KW_OBJ
   211          | KW_MSG
   212          | KW_METADATA IDENTIFIER
 
-  213 $@56: /* empty */
+  213 @56: /* empty */
 
-  214 attribute: KW_LATEX '(' $@56 LATEX_STRING ')'
+  214 attribute: KW_LATEX '(' @56 LATEX_STRING ')'
   215          | KW_SPECIAL '(' hookList ')'
   216          | KW_DITTO
 
@@ -393,21 +393,21 @@ Grammar
   233 subsortList: subsortList sortName
   234            | subsortList '<'
 
-  235 $@57: /* empty */
+  235 @57: /* empty */
 
-  236 subsortList: sortName $@57 sortNameList '<'
+  236 subsortList: sortName @57 sortNameList '<'
 
   237 sortName: sortNameFrag
 
   238 sortNameFrag: sortToken
 
-  239 $@58: /* empty */
+  239 @58: /* empty */
 
-  240 sortNameFrag: sortNameFrag '{' $@58 sortNameFrags '}'
+  240 sortNameFrag: sortNameFrag '{' @58 sortNameFrags '}'
 
-  241 $@59: /* empty */
+  241 @59: /* empty */
 
-  242 sortNameFrags: sortNameFrags ',' $@59 sortNameFrag
+  242 sortNameFrags: sortNameFrags ',' @59 sortNameFrag
   243              | sortNameFrag
 
   244 token: identifier
@@ -524,137 +524,137 @@ Grammar
   344             | KW_OP_HOOK
   345             | KW_TERM_HOOK
 
-  346 $@60: /* empty */
+  346 @60: /* empty */
 
-  347 command: KW_SELECT $@60 endBubble
+  347 command: KW_SELECT @60 endBubble
 
-  348 $@61: /* empty */
+  348 @61: /* empty */
 
-  349 command: KW_DUMP $@61 endBubble
+  349 command: KW_DUMP @61 endBubble
 
-  350 $@62: /* empty */
+  350 @62: /* empty */
 
-  351 command: KW_PARSE $@62 moduleAndTerm
+  351 command: KW_PARSE @62 moduleAndTerm
 
-  352 $@63: /* empty */
+  352 @63: /* empty */
 
-  353 command: KW_CREDUCE $@63 moduleAndTerm
+  353 command: KW_CREDUCE @63 moduleAndTerm
 
-  354 $@64: /* empty */
+  354 @64: /* empty */
 
-  355 command: KW_SREDUCE $@64 moduleAndTerm
+  355 command: KW_SREDUCE @64 moduleAndTerm
 
-  356 $@65: /* empty */
+  356 @65: /* empty */
 
-  357 command: optDebug KW_REDUCE $@65 moduleAndTerm
+  357 command: optDebug KW_REDUCE @65 moduleAndTerm
 
-  358 $@66: /* empty */
+  358 @66: /* empty */
 
-  359 command: optDebug KW_REWRITE $@66 numberModuleTerm
+  359 command: optDebug KW_REWRITE @66 numberModuleTerm
 
-  360 $@67: /* empty */
+  360 @67: /* empty */
 
-  361 command: optDebug KW_EREWRITE $@67 numbersModuleTerm
+  361 command: optDebug KW_EREWRITE @67 numbersModuleTerm
 
-  362 $@68: /* empty */
+  362 @68: /* empty */
 
-  363 command: optDebug KW_FREWRITE $@68 numbersModuleTerm
+  363 command: optDebug KW_FREWRITE @68 numbersModuleTerm
 
-  364 $@69: /* empty */
+  364 @69: /* empty */
 
-  365 command: optDebug KW_SREWRITE $@69 numberModuleTerm
+  365 command: optDebug KW_SREWRITE @69 numberModuleTerm
 
-  366 $@70: /* empty */
+  366 @70: /* empty */
 
-  367 command: search $@70 numbersModuleTerm
+  367 command: search @70 numbersModuleTerm
 
-  368 $@71: /* empty */
+  368 @71: /* empty */
 
-  369 command: match $@71 numberModuleTerm
+  369 command: match @71 numberModuleTerm
 
-  370 $@72: /* empty */
+  370 @72: /* empty */
 
-  371 command: KW_UNIFY $@72 numberModuleTerm
+  371 command: KW_UNIFY @72 numberModuleTerm
   372        | optDebug KW_CONTINUE optNumber '.'
 
-  373 $@73: /* empty */
+  373 @73: /* empty */
 
-  374 command: KW_LOOP $@73 moduleAndTerm
+  374 command: KW_LOOP @73 moduleAndTerm
   375        | parenBubble
 
-  376 $@74: /* empty */
+  376 @74: /* empty */
 
-  377 command: KW_TRACE select $@74 opSelect
+  377 command: KW_TRACE select @74 opSelect
 
-  378 $@75: /* empty */
+  378 @75: /* empty */
 
-  379 command: KW_TRACE exclude $@75 opSelect
+  379 command: KW_TRACE exclude @75 opSelect
 
-  380 $@76: /* empty */
+  380 @76: /* empty */
 
-  381 command: KW_BREAK select $@76 opSelect
+  381 command: KW_BREAK select @76 opSelect
 
-  382 $@77: /* empty */
+  382 @77: /* empty */
 
-  383 command: KW_PRINT conceal $@77 opSelect
+  383 command: KW_PRINT conceal @77 opSelect
   384        | KW_DO KW_CLEAR KW_MEMO '.'
 
-  385 $@78: /* empty */
+  385 @78: /* empty */
 
-  386 command: KW_SHOW KW_MOD $@78 endBubble
+  386 command: KW_SHOW KW_MOD @78 endBubble
 
-  387 $@79: /* empty */
+  387 @79: /* empty */
 
-  388 command: KW_SHOW KW_MODULE $@79 endBubble
+  388 command: KW_SHOW KW_MODULE @79 endBubble
 
-  389 $@80: /* empty */
+  389 @80: /* empty */
 
-  390 command: KW_SHOW KW_ALL $@80 endBubble
+  390 command: KW_SHOW KW_ALL @80 endBubble
 
-  391 $@81: /* empty */
+  391 @81: /* empty */
 
-  392 command: KW_SHOW KW_VIEW $@81 endBubble
+  392 command: KW_SHOW KW_VIEW @81 endBubble
   393        | KW_SHOW KW_MODULES '.'
   394        | KW_SHOW KW_VIEWS '.'
 
-  395 $@82: /* empty */
+  395 @82: /* empty */
 
-  396 command: KW_SHOW KW_SORTS $@82 endBubble
+  396 command: KW_SHOW KW_SORTS @82 endBubble
 
-  397 $@83: /* empty */
+  397 @83: /* empty */
 
-  398 command: KW_SHOW KW_OPS2 $@83 endBubble
+  398 command: KW_SHOW KW_OPS2 @83 endBubble
 
-  399 $@84: /* empty */
+  399 @84: /* empty */
 
-  400 command: KW_SHOW KW_VARS $@84 endBubble
+  400 command: KW_SHOW KW_VARS @84 endBubble
 
-  401 $@85: /* empty */
+  401 @85: /* empty */
 
-  402 command: KW_SHOW KW_MBS $@85 endBubble
+  402 command: KW_SHOW KW_MBS @85 endBubble
 
-  403 $@86: /* empty */
+  403 @86: /* empty */
 
-  404 command: KW_SHOW KW_EQS $@86 endBubble
+  404 command: KW_SHOW KW_EQS @86 endBubble
 
-  405 $@87: /* empty */
+  405 @87: /* empty */
 
-  406 command: KW_SHOW KW_RLS $@87 endBubble
+  406 command: KW_SHOW KW_RLS @87 endBubble
 
-  407 $@88: /* empty */
+  407 @88: /* empty */
 
-  408 command: KW_SHOW KW_SUMMARY $@88 endBubble
+  408 command: KW_SHOW KW_SUMMARY @88 endBubble
 
-  409 $@89: /* empty */
+  409 @89: /* empty */
 
-  410 command: KW_SHOW KW_KINDS $@89 endBubble
+  410 command: KW_SHOW KW_KINDS @89 endBubble
   411        | KW_SHOW KW_PATH SIMPLE_NUMBER '.'
   412        | KW_SHOW KW_PATH KW_LABEL SIMPLE_NUMBER '.'
   413        | KW_SHOW KW_SEARCH KW_GRAPH '.'
 
-  414 $@90: /* empty */
+  414 @90: /* empty */
 
-  415 command: KW_SHOW KW_PROFILE $@90 endBubble
+  415 command: KW_SHOW KW_PROFILE @90 endBubble
   416        | KW_SET KW_SHOW KW_ADVISE polarity '.'
   417        | KW_SET KW_SHOW KW_STATS polarity '.'
   418        | KW_SET KW_SHOW KW_LOOP KW_STATS polarity '.'
@@ -669,17 +669,17 @@ Grammar
   427        | KW_SET KW_TRACE traceOption polarity '.'
   428        | KW_SET KW_BREAK polarity '.'
 
-  429 $@91: /* empty */
+  429 @91: /* empty */
 
-  430 $@92: /* empty */
+  430 @92: /* empty */
 
-  431 command: KW_SET importMode $@91 cSimpleTokenBarDot $@92 polarity '.'
+  431 command: KW_SET importMode @91 cSimpleTokenBarDot @92 polarity '.'
 
-  432 $@93: /* empty */
+  432 @93: /* empty */
 
-  433 $@94: /* empty */
+  433 @94: /* empty */
 
-  434 command: KW_SET KW_OMOD KW_INCLUDE $@93 cSimpleTokenBarDot $@94 polarity '.'
+  434 command: KW_SET KW_OMOD KW_INCLUDE @93 cSimpleTokenBarDot @94 polarity '.'
   435        | KW_SET KW_VERBOSE polarity '.'
   436        | KW_SET KW_CLEAR KW_MEMO polarity '.'
   437        | KW_SET KW_CLEAR KW_RLS polarity '.'
@@ -693,9 +693,9 @@ Grammar
   445        | KW_SET KW_GC KW_SHOW polarity '.'
   446        | KW_SET KW_STATS polarity '.'
 
-  447 $@95: /* empty */
+  447 @95: /* empty */
 
-  448 command: error $@95 '.'
+  448 command: error @95 '.'
 
   449 printOption: KW_MIXFIX
   450            | KW_FLAT
@@ -751,125 +751,125 @@ Grammar
 
   490 moduleAndTerm: initialEndBubble
 
-  491 $@96: /* empty */
+  491 @96: /* empty */
 
-  492 moduleAndTerm: cTokenBarIn $@96 endBubble
+  492 moduleAndTerm: cTokenBarIn @96 endBubble
 
-  493 $@97: /* empty */
+  493 @97: /* empty */
 
-  494 inEnd: ':' $@97 endBubble
+  494 inEnd: ':' @97 endBubble
   495      | endBubble
 
-  496 $@98: /* empty */
+  496 @98: /* empty */
 
-  497 numberModuleTerm: '[' $@98 numberModuleTerm1
+  497 numberModuleTerm: '[' @98 numberModuleTerm1
   498                 | initialEndBubble
 
-  499 $@99: /* empty */
+  499 @99: /* empty */
 
-  500 numberModuleTerm: cTokenBarLeftIn $@99 endBubble
+  500 numberModuleTerm: cTokenBarLeftIn @99 endBubble
 
-  501 $@100: /* empty */
+  501 @100: /* empty */
 
-  502 numberModuleTerm1: NUMERIC_ID $@100 numberModuleTerm2
+  502 numberModuleTerm1: NUMERIC_ID @100 numberModuleTerm2
 
-  503 $@101: /* empty */
+  503 @101: /* empty */
 
-  504 numberModuleTerm1: cTokenBarDotNumber $@101 endBubble
+  504 numberModuleTerm1: cTokenBarDotNumber @101 endBubble
   505                  | miscEndBubble
 
-  506 $@102: /* empty */
+  506 @102: /* empty */
 
-  507 numberModuleTerm2: ']' $@102 moduleAndTerm
+  507 numberModuleTerm2: ']' @102 moduleAndTerm
 
-  508 $@103: /* empty */
+  508 @103: /* empty */
 
-  509 numberModuleTerm2: cTokenBarDotRight $@103 endBubble
+  509 numberModuleTerm2: cTokenBarDotRight @103 endBubble
   510                  | miscEndBubble
 
-  511 $@104: /* empty */
+  511 @104: /* empty */
 
-  512 numbersModuleTerm: '[' $@104 numbersModuleTerm1
+  512 numbersModuleTerm: '[' @104 numbersModuleTerm1
   513                  | initialEndBubble
 
-  514 $@105: /* empty */
+  514 @105: /* empty */
 
-  515 numbersModuleTerm: cTokenBarLeftIn $@105 endBubble
+  515 numbersModuleTerm: cTokenBarLeftIn @105 endBubble
 
-  516 $@106: /* empty */
+  516 @106: /* empty */
 
-  517 numbersModuleTerm1: NUMERIC_ID $@106 numbersModuleTerm2
+  517 numbersModuleTerm1: NUMERIC_ID @106 numbersModuleTerm2
 
-  518 $@107: /* empty */
+  518 @107: /* empty */
 
-  519 numbersModuleTerm1: ',' $@107 numbersModuleTerm5
+  519 numbersModuleTerm1: ',' @107 numbersModuleTerm5
 
-  520 $@108: /* empty */
+  520 @108: /* empty */
 
-  521 numbersModuleTerm1: cTokenBarDotCommaNumber $@108 endBubble
+  521 numbersModuleTerm1: cTokenBarDotCommaNumber @108 endBubble
   522                   | miscEndBubble
 
-  523 $@109: /* empty */
+  523 @109: /* empty */
 
-  524 numbersModuleTerm2: ']' $@109 moduleAndTerm
+  524 numbersModuleTerm2: ']' @109 moduleAndTerm
 
-  525 $@110: /* empty */
+  525 @110: /* empty */
 
-  526 numbersModuleTerm2: ',' $@110 numbersModuleTerm3
+  526 numbersModuleTerm2: ',' @110 numbersModuleTerm3
 
-  527 $@111: /* empty */
+  527 @111: /* empty */
 
-  528 numbersModuleTerm2: cTokenBarDotCommaRight $@111 endBubble
+  528 numbersModuleTerm2: cTokenBarDotCommaRight @111 endBubble
   529                   | miscEndBubble
 
-  530 $@112: /* empty */
+  530 @112: /* empty */
 
-  531 numbersModuleTerm3: NUMERIC_ID $@112 numbersModuleTerm4
+  531 numbersModuleTerm3: NUMERIC_ID @112 numbersModuleTerm4
 
-  532 $@113: /* empty */
+  532 @113: /* empty */
 
-  533 numbersModuleTerm3: cTokenBarDotNumber $@113 endBubble
+  533 numbersModuleTerm3: cTokenBarDotNumber @113 endBubble
   534                   | miscEndBubble
 
-  535 $@114: /* empty */
+  535 @114: /* empty */
 
-  536 numbersModuleTerm4: ']' $@114 moduleAndTerm
+  536 numbersModuleTerm4: ']' @114 moduleAndTerm
 
-  537 $@115: /* empty */
+  537 @115: /* empty */
 
-  538 numbersModuleTerm4: cTokenBarDotRight $@115 endBubble
+  538 numbersModuleTerm4: cTokenBarDotRight @115 endBubble
   539                   | miscEndBubble
 
-  540 $@116: /* empty */
+  540 @116: /* empty */
 
-  541 numbersModuleTerm5: NUMERIC_ID $@116 numbersModuleTerm6
+  541 numbersModuleTerm5: NUMERIC_ID @116 numbersModuleTerm6
 
-  542 $@117: /* empty */
+  542 @117: /* empty */
 
-  543 numbersModuleTerm5: cTokenBarDotNumber $@117 endBubble
+  543 numbersModuleTerm5: cTokenBarDotNumber @117 endBubble
   544                   | miscEndBubble
 
-  545 $@118: /* empty */
+  545 @118: /* empty */
 
-  546 numbersModuleTerm6: ']' $@118 moduleAndTerm
+  546 numbersModuleTerm6: ']' @118 moduleAndTerm
 
-  547 $@119: /* empty */
+  547 @119: /* empty */
 
-  548 numbersModuleTerm6: cTokenBarDotRight $@119 endBubble
+  548 numbersModuleTerm6: cTokenBarDotRight @119 endBubble
   549                   | miscEndBubble
 
-  550 $@120: /* empty */
+  550 @120: /* empty */
 
-  551 miscEndBubble: '(' $@120 endBubble
+  551 miscEndBubble: '(' @120 endBubble
   552              | endBubble
 
-  553 $@121: /* empty */
+  553 @121: /* empty */
 
-  554 initialEndBubble: '(' $@121 endBubble
+  554 initialEndBubble: '(' @121 endBubble
 
-  555 $@122: /* empty */
+  555 @122: /* empty */
 
-  556 initialEndBubble: KW_IN $@122 inEnd
+  556 initialEndBubble: KW_IN @122 inEnd
   557                 | ENDS_IN_DOT
 
   558 cTokenBarIn: IDENTIFIER
@@ -1124,15 +1124,15 @@ item (170)
     on left: 3 4 5 6, on right: 1
 directive (171)
     on left: 8 10 11 13 15 16 18 19 20, on right: 5
-$@1 (172)
+@1 (172)
     on left: 7, on right: 8
-$@2 (173)
+@2 (173)
     on left: 9, on right: 10
-$@3 (174)
+@3 (174)
     on left: 12, on right: 13
-$@4 (175)
+@4 (175)
     on left: 14, on right: 15
-$@5 (176)
+@5 (176)
     on left: 17, on right: 18
 moduleExprDot (177)
     on left: 21 22 23 24 25 26 27, on right: 26 111
@@ -1146,7 +1146,7 @@ renameExpr (181)
     on left: 35, on right: 24 31
 instantExpr (182)
     on left: 37, on right: 25 33
-$@6 (183)
+@6 (183)
     on left: 36, on right: 37
 parenExpr (184)
     on left: 38, on right: 23 32
@@ -1154,9 +1154,9 @@ argList (185)
     on left: 39 40, on right: 37 39
 renaming (186)
     on left: 43, on right: 35
-$@7 (187)
+@7 (187)
     on left: 41, on right: 43
-$@8 (188)
+@8 (188)
     on left: 42, on right: 43
 renaming2 (189)
     on left: 44 45, on right: 43
@@ -1164,35 +1164,35 @@ mappingList (190)
     on left: 46 47, on right: 44 46
 mapping (191)
     on left: 48 49 52, on right: 46 47
-$@9 (192)
+@9 (192)
     on left: 50, on right: 52
-$@10 (193)
+@10 (193)
     on left: 51, on right: 52
 fromSpec (194)
     on left: 54 55, on right: 52
-$@11 (195)
+@11 (195)
     on left: 53, on right: 54
 toAttributes (196)
     on left: 57 58, on right: 52
-$@12 (197)
+@12 (197)
     on left: 56, on right: 57
 toAttributeList (198)
     on left: 59 60, on right: 57 59
 toAttribute (199)
     on left: 61 63 65 67, on right: 59 60
-$@13 (200)
+@13 (200)
     on left: 62, on right: 63
-$@14 (201)
+@14 (201)
     on left: 64, on right: 65
-$@15 (202)
+@15 (202)
     on left: 66, on right: 67
 view (203)
     on left: 71, on right: 4
-$@16 (204)
+@16 (204)
     on left: 68, on right: 71
-$@17 (205)
+@17 (205)
     on left: 69, on right: 71
-$@18 (206)
+@18 (206)
     on left: 70, on right: 71
 viewDecList (207)
     on left: 72 73, on right: 71 72
@@ -1200,17 +1200,17 @@ skipStrayArrow (208)
     on left: 74 75, on right: 77 120
 viewDeclaration (209)
     on left: 76 77 79 80, on right: 72
-$@19 (210)
+@19 (210)
     on left: 78, on right: 79
 sortDot (211)
     on left: 81 82, on right: 76
 viewEndOpMap (212)
     on left: 85 87, on right: 79
-$@20 (213)
+@20 (213)
     on left: 83, on right: 85
-$@21 (214)
+@21 (214)
     on left: 84, on right: 85
-$@22 (215)
+@22 (215)
     on left: 86, on right: 87
 endBubble (216)
     on left: 88 89, on right: 85 87 123 127 130 134 137 141 347 349
@@ -1218,13 +1218,13 @@ endBubble (216)
     500 504 509 515 521 528 533 538 543 548 551 552 554
 parenBubble (217)
     on left: 91, on right: 161 224 225 226 375 601
-$@23 (218)
+@23 (218)
     on left: 90, on right: 91
 module (219)
     on left: 94, on right: 3
-$@24 (220)
+@24 (220)
     on left: 92, on right: 94
-$@25 (221)
+@25 (221)
     on left: 93, on right: 94
 dot (222)
     on left: 95 96, on right: 113 115 149
@@ -1247,51 +1247,51 @@ decList (230)
 declaration (231)
     on left: 111 113 115 118 119 120 123 127 130 134 137 141 144 145
     147 149 150, on right: 109
-$@26 (232)
+@26 (232)
     on left: 112, on right: 113
-$@27 (233)
+@27 (233)
     on left: 114, on right: 115
-$@28 (234)
+@28 (234)
     on left: 116, on right: 118
-$@29 (235)
+@29 (235)
     on left: 117, on right: 118
-$@30 (236)
+@30 (236)
     on left: 121, on right: 123
-$@31 (237)
+@31 (237)
     on left: 122, on right: 123
-$@32 (238)
+@32 (238)
     on left: 124, on right: 127
-$@33 (239)
+@33 (239)
     on left: 125, on right: 127
-$@34 (240)
+@34 (240)
     on left: 126, on right: 127
-$@35 (241)
+@35 (241)
     on left: 128, on right: 130
-$@36 (242)
+@36 (242)
     on left: 129, on right: 130
-$@37 (243)
+@37 (243)
     on left: 131, on right: 134
-$@38 (244)
+@38 (244)
     on left: 132, on right: 134
-$@39 (245)
+@39 (245)
     on left: 133, on right: 134
-$@40 (246)
+@40 (246)
     on left: 135, on right: 137
-$@41 (247)
+@41 (247)
     on left: 136, on right: 137
-$@42 (248)
+@42 (248)
     on left: 138, on right: 141
-$@43 (249)
+@43 (249)
     on left: 139, on right: 141
-$@44 (250)
+@44 (250)
     on left: 140, on right: 141
-$@45 (251)
+@45 (251)
     on left: 142, on right: 144
-$@46 (252)
+@46 (252)
     on left: 143, on right: 144
-$@47 (253)
+@47 (253)
     on left: 146, on right: 147
-$@48 (254)
+@48 (254)
     on left: 148, on right: 149
 classDef (255)
     on left: 151 152, on right: 147
@@ -1321,7 +1321,7 @@ typeList (267)
     on left: 175 176, on right: 54 85 162 175
 typeName (268)
     on left: 177 179, on right: 54 85 105 162 171 175
-$@49 (269)
+@49 (269)
     on left: 178, on right: 179
 sortNames (270)
     on left: 180 181, on right: 179 180
@@ -1334,19 +1334,19 @@ idKeyword (273)
 attribute (274)
     on left: 189 190 192 193 194 195 197 199 201 203 204 205 206 208
     209 210 211 212 214 215 216, on right: 184 185
-$@50 (275)
+@50 (275)
     on left: 191, on right: 192
-$@51 (276)
+@51 (276)
     on left: 196, on right: 197
-$@52 (277)
+@52 (277)
     on left: 198, on right: 199
-$@53 (278)
+@53 (278)
     on left: 200, on right: 201
-$@54 (279)
+@54 (279)
     on left: 202, on right: 203
-$@55 (280)
+@55 (280)
     on left: 207, on right: 208
-$@56 (281)
+@56 (281)
     on left: 213, on right: 214
 identity (282)
     on left: 217 218, on right: 192
@@ -1364,17 +1364,17 @@ sortNameList (288)
     on left: 231 232, on right: 113 231 236
 subsortList (289)
     on left: 233 234 236, on right: 115 149 233 234
-$@57 (290)
+@57 (290)
     on left: 235, on right: 236
 sortName (291)
     on left: 237, on right: 48 76 81 177 180 181 231 233 236
 sortNameFrag (292)
     on left: 238 240, on right: 237 240 242 243
-$@58 (293)
+@58 (293)
     on left: 239, on right: 240
 sortNameFrags (294)
     on left: 242 243, on right: 240 242
-$@59 (295)
+@59 (295)
     on left: 241, on right: 242
 token (296)
     on left: 244 245 246 247 248, on right: 34 39 40 49 71 94 101 147
@@ -1382,16 +1382,16 @@ token (296)
 tokenBarDot (297)
     on left: 249 250 251 252 253 254, on right: 21 155
 tokenBarColon (298)
-    on left: 255 256 257 258 259 260 261 262 263 264, on right: 156
-    157 160
+    on left: 255 256 257 258 259 260 261 262 263 264,
+    on right: 156 157 160
 sortToken (299)
-    on left: 265 266 267 268 269 270 271 272 273 274 275 276, on right:
-    238
+    on left: 265 266 267 268 269 270 271 272 273 274 275 276,
+    on right: 238
 endsInDot (300)
     on left: 277 278, on right: 22
 inert (301)
-    on left: 279 280 281 282 283 284 285 286 287 288, on right: 249
-    289
+    on left: 279 280 281 282 283 284 285 286 287 288,
+    on right: 249 289
 identifier (302)
     on left: 289 290 291 292, on right: 244 255
 startKeyword (303)
@@ -1412,83 +1412,84 @@ command (308)
     402 404 406 408 410 411 412 413 415 416 417 418 419 420 421 422
     423 424 425 426 427 428 431 434 435 436 437 438 439 440 441 442
     443 444 445 446 448, on right: 6
-$@60 (309)
+@60 (309)
     on left: 346, on right: 347
-$@61 (310)
+@61 (310)
     on left: 348, on right: 349
-$@62 (311)
+@62 (311)
     on left: 350, on right: 351
-$@63 (312)
+@63 (312)
     on left: 352, on right: 353
-$@64 (313)
+@64 (313)
     on left: 354, on right: 355
-$@65 (314)
+@65 (314)
     on left: 356, on right: 357
-$@66 (315)
+@66 (315)
     on left: 358, on right: 359
-$@67 (316)
+@67 (316)
     on left: 360, on right: 361
-$@68 (317)
+@68 (317)
     on left: 362, on right: 363
-$@69 (318)
+@69 (318)
     on left: 364, on right: 365
-$@70 (319)
+@70 (319)
     on left: 366, on right: 367
-$@71 (320)
+@71 (320)
     on left: 368, on right: 369
-$@72 (321)
+@72 (321)
     on left: 370, on right: 371
-$@73 (322)
+@73 (322)
     on left: 373, on right: 374
-$@74 (323)
+@74 (323)
     on left: 376, on right: 377
-$@75 (324)
+@75 (324)
     on left: 378, on right: 379
-$@76 (325)
+@76 (325)
     on left: 380, on right: 381
-$@77 (326)
+@77 (326)
     on left: 382, on right: 383
-$@78 (327)
+@78 (327)
     on left: 385, on right: 386
-$@79 (328)
+@79 (328)
     on left: 387, on right: 388
-$@80 (329)
+@80 (329)
     on left: 389, on right: 390
-$@81 (330)
+@81 (330)
     on left: 391, on right: 392
-$@82 (331)
+@82 (331)
     on left: 395, on right: 396
-$@83 (332)
+@83 (332)
     on left: 397, on right: 398
-$@84 (333)
+@84 (333)
     on left: 399, on right: 400
-$@85 (334)
+@85 (334)
     on left: 401, on right: 402
-$@86 (335)
+@86 (335)
     on left: 403, on right: 404
-$@87 (336)
+@87 (336)
     on left: 405, on right: 406
-$@88 (337)
+@88 (337)
     on left: 407, on right: 408
-$@89 (338)
+@89 (338)
     on left: 409, on right: 410
-$@90 (339)
+@90 (339)
     on left: 414, on right: 415
-$@91 (340)
+@91 (340)
     on left: 429, on right: 431
-$@92 (341)
+@92 (341)
     on left: 430, on right: 431
-$@93 (342)
+@93 (342)
     on left: 432, on right: 434
-$@94 (343)
+@94 (343)
     on left: 433, on right: 434
-$@95 (344)
+@95 (344)
     on left: 447, on right: 448
 printOption (345)
-    on left: 449 450 451 452 453 454 455 456 457 458, on right: 424
+    on left: 449 450 451 452 453 454 455 456 457 458,
+    on right: 424
 traceOption (346)
-    on left: 459 460 461 462 463 464 465 466 467 468 469, on right:
-    427
+    on left: 459 460 461 462 463 464 465 466 467 468 469,
+    on right: 427
 polarity (347)
     on left: 470 471, on right: 416 417 418 419 420 421 422 423 424
     425 426 427 428 431 434 435 436 437 438 439 440 445 446
@@ -1510,85 +1511,85 @@ importMode (355)
     on left: 487 488 489, on right: 431
 moduleAndTerm (356)
     on left: 490 492, on right: 351 353 355 357 374 507 524 536 546
-$@96 (357)
+@96 (357)
     on left: 491, on right: 492
 inEnd (358)
     on left: 494 495, on right: 556
-$@97 (359)
+@97 (359)
     on left: 493, on right: 494
 numberModuleTerm (360)
     on left: 497 498 500, on right: 359 365 369 371
-$@98 (361)
+@98 (361)
     on left: 496, on right: 497
-$@99 (362)
+@99 (362)
     on left: 499, on right: 500
 numberModuleTerm1 (363)
     on left: 502 504 505, on right: 497
-$@100 (364)
+@100 (364)
     on left: 501, on right: 502
-$@101 (365)
+@101 (365)
     on left: 503, on right: 504
 numberModuleTerm2 (366)
     on left: 507 509 510, on right: 502
-$@102 (367)
+@102 (367)
     on left: 506, on right: 507
-$@103 (368)
+@103 (368)
     on left: 508, on right: 509
 numbersModuleTerm (369)
     on left: 512 513 515, on right: 361 363 367
-$@104 (370)
+@104 (370)
     on left: 511, on right: 512
-$@105 (371)
+@105 (371)
     on left: 514, on right: 515
 numbersModuleTerm1 (372)
     on left: 517 519 521 522, on right: 512
-$@106 (373)
+@106 (373)
     on left: 516, on right: 517
-$@107 (374)
+@107 (374)
     on left: 518, on right: 519
-$@108 (375)
+@108 (375)
     on left: 520, on right: 521
 numbersModuleTerm2 (376)
     on left: 524 526 528 529, on right: 517
-$@109 (377)
+@109 (377)
     on left: 523, on right: 524
-$@110 (378)
+@110 (378)
     on left: 525, on right: 526
-$@111 (379)
+@111 (379)
     on left: 527, on right: 528
 numbersModuleTerm3 (380)
     on left: 531 533 534, on right: 526
-$@112 (381)
+@112 (381)
     on left: 530, on right: 531
-$@113 (382)
+@113 (382)
     on left: 532, on right: 533
 numbersModuleTerm4 (383)
     on left: 536 538 539, on right: 531
-$@114 (384)
+@114 (384)
     on left: 535, on right: 536
-$@115 (385)
+@115 (385)
     on left: 537, on right: 538
 numbersModuleTerm5 (386)
     on left: 541 543 544, on right: 519
-$@116 (387)
+@116 (387)
     on left: 540, on right: 541
-$@117 (388)
+@117 (388)
     on left: 542, on right: 543
 numbersModuleTerm6 (389)
     on left: 546 548 549, on right: 541
-$@118 (390)
+@118 (390)
     on left: 545, on right: 546
-$@119 (391)
+@119 (391)
     on left: 547, on right: 548
 miscEndBubble (392)
     on left: 551 552, on right: 505 510 522 529 534 539 544 549
-$@120 (393)
+@120 (393)
     on left: 550, on right: 551
 initialEndBubble (394)
     on left: 554 556 557, on right: 490 498 513
-$@121 (395)
+@121 (395)
     on left: 553, on right: 554
-$@122 (396)
+@122 (396)
     on left: 555, on right: 556
 cTokenBarIn (397)
     on left: 558 559 560 561 562 563 564, on right: 492
@@ -1681,11 +1682,11 @@ state 0
 
 state 1
 
-  448 command: error . $@95 '.'
+  448 command: error . @95 '.'
 
-    $default  reduce using rule 447 ($@95)
+    $default  reduce using rule 447 (@95)
 
-    $@95  go to state 49
+    @95  go to state 49
 
 
 state 2
@@ -1704,29 +1705,29 @@ state 3
 
 state 4
 
-   71 view: KW_VIEW . $@16 token KW_FROM moduleExpr $@17 KW_TO moduleExpr $@18 expectedIs viewDecList KW_ENDV
+   71 view: KW_VIEW . @16 token KW_FROM moduleExpr @17 KW_TO moduleExpr @18 expectedIs viewDecList KW_ENDV
 
-    $default  reduce using rule 68 ($@16)
+    $default  reduce using rule 68 (@16)
 
-    $@16  go to state 50
+    @16  go to state 50
 
 
 state 5
 
-  351 command: KW_PARSE . $@62 moduleAndTerm
+  351 command: KW_PARSE . @62 moduleAndTerm
 
-    $default  reduce using rule 350 ($@62)
+    $default  reduce using rule 350 (@62)
 
-    $@62  go to state 51
+    @62  go to state 51
 
 
 state 6
 
-  374 command: KW_LOOP . $@73 moduleAndTerm
+  374 command: KW_LOOP . @73 moduleAndTerm
 
-    $default  reduce using rule 373 ($@73)
+    $default  reduce using rule 373 (@73)
 
-    $@73  go to state 52
+    @73  go to state 52
 
 
 state 7
@@ -1759,11 +1760,11 @@ state 10
 
 state 11
 
-  371 command: KW_UNIFY . $@72 numberModuleTerm
+  371 command: KW_UNIFY . @72 numberModuleTerm
 
-    $default  reduce using rule 370 ($@72)
+    $default  reduce using rule 370 (@72)
 
-    $@72  go to state 53
+    @72  go to state 53
 
 
 state 12
@@ -1788,8 +1789,8 @@ state 13
   426        | KW_SET . KW_PRINT KW_ATTRIBUTE KW_NEWLINE polarity '.'
   427        | KW_SET . KW_TRACE traceOption polarity '.'
   428        | KW_SET . KW_BREAK polarity '.'
-  431        | KW_SET . importMode $@91 cSimpleTokenBarDot $@92 polarity '.'
-  434        | KW_SET . KW_OMOD KW_INCLUDE $@93 cSimpleTokenBarDot $@94 polarity '.'
+  431        | KW_SET . importMode @91 cSimpleTokenBarDot @92 polarity '.'
+  434        | KW_SET . KW_OMOD KW_INCLUDE @93 cSimpleTokenBarDot @94 polarity '.'
   435        | KW_SET . KW_VERBOSE polarity '.'
   436        | KW_SET . KW_CLEAR KW_MEMO polarity '.'
   437        | KW_SET . KW_CLEAR KW_RLS polarity '.'
@@ -1819,24 +1820,24 @@ state 13
 
 state 14
 
-  386 command: KW_SHOW . KW_MOD $@78 endBubble
-  388        | KW_SHOW . KW_MODULE $@79 endBubble
-  390        | KW_SHOW . KW_ALL $@80 endBubble
-  392        | KW_SHOW . KW_VIEW $@81 endBubble
+  386 command: KW_SHOW . KW_MOD @78 endBubble
+  388        | KW_SHOW . KW_MODULE @79 endBubble
+  390        | KW_SHOW . KW_ALL @80 endBubble
+  392        | KW_SHOW . KW_VIEW @81 endBubble
   393        | KW_SHOW . KW_MODULES '.'
   394        | KW_SHOW . KW_VIEWS '.'
-  396        | KW_SHOW . KW_SORTS $@82 endBubble
-  398        | KW_SHOW . KW_OPS2 $@83 endBubble
-  400        | KW_SHOW . KW_VARS $@84 endBubble
-  402        | KW_SHOW . KW_MBS $@85 endBubble
-  404        | KW_SHOW . KW_EQS $@86 endBubble
-  406        | KW_SHOW . KW_RLS $@87 endBubble
-  408        | KW_SHOW . KW_SUMMARY $@88 endBubble
-  410        | KW_SHOW . KW_KINDS $@89 endBubble
+  396        | KW_SHOW . KW_SORTS @82 endBubble
+  398        | KW_SHOW . KW_OPS2 @83 endBubble
+  400        | KW_SHOW . KW_VARS @84 endBubble
+  402        | KW_SHOW . KW_MBS @85 endBubble
+  404        | KW_SHOW . KW_EQS @86 endBubble
+  406        | KW_SHOW . KW_RLS @87 endBubble
+  408        | KW_SHOW . KW_SUMMARY @88 endBubble
+  410        | KW_SHOW . KW_KINDS @89 endBubble
   411        | KW_SHOW . KW_PATH SIMPLE_NUMBER '.'
   412        | KW_SHOW . KW_PATH KW_LABEL SIMPLE_NUMBER '.'
   413        | KW_SHOW . KW_SEARCH KW_GRAPH '.'
-  415        | KW_SHOW . KW_PROFILE $@90 endBubble
+  415        | KW_SHOW . KW_PROFILE @90 endBubble
 
     KW_MOD      shift, and go to state 69
     KW_VIEW     shift, and go to state 70
@@ -1859,8 +1860,8 @@ state 14
 
 state 15
 
-  377 command: KW_TRACE . select $@74 opSelect
-  379        | KW_TRACE . exclude $@75 opSelect
+  377 command: KW_TRACE . select @74 opSelect
+  379        | KW_TRACE . exclude @75 opSelect
 
     KW_SELECT    shift, and go to state 86
     KW_DESELECT  shift, and go to state 87
@@ -1873,16 +1874,16 @@ state 15
 
 state 16
 
-  347 command: KW_SELECT . $@60 endBubble
+  347 command: KW_SELECT . @60 endBubble
 
-    $default  reduce using rule 346 ($@60)
+    $default  reduce using rule 346 (@60)
 
-    $@60  go to state 92
+    @60  go to state 92
 
 
 state 17
 
-  383 command: KW_PRINT . conceal $@77 opSelect
+  383 command: KW_PRINT . conceal @77 opSelect
 
     KW_CONCEAL  shift, and go to state 93
     KW_REVEAL   shift, and go to state 94
@@ -1892,7 +1893,7 @@ state 17
 
 state 18
 
-  381 command: KW_BREAK . select $@76 opSelect
+  381 command: KW_BREAK . select @76 opSelect
 
     KW_SELECT    shift, and go to state 86
     KW_DESELECT  shift, and go to state 87
@@ -1944,29 +1945,29 @@ state 24
 
 state 25
 
-  353 command: KW_CREDUCE . $@63 moduleAndTerm
+  353 command: KW_CREDUCE . @63 moduleAndTerm
 
-    $default  reduce using rule 352 ($@63)
+    $default  reduce using rule 352 (@63)
 
-    $@63  go to state 102
+    @63  go to state 102
 
 
 state 26
 
-  355 command: KW_SREDUCE . $@64 moduleAndTerm
+  355 command: KW_SREDUCE . @64 moduleAndTerm
 
-    $default  reduce using rule 354 ($@64)
+    $default  reduce using rule 354 (@64)
 
-    $@64  go to state 103
+    @64  go to state 103
 
 
 state 27
 
-  349 command: KW_DUMP . $@61 endBubble
+  349 command: KW_DUMP . @61 endBubble
 
-    $default  reduce using rule 348 ($@61)
+    $default  reduce using rule 348 (@61)
 
-    $@61  go to state 104
+    @61  go to state 104
 
 
 state 28
@@ -1978,20 +1979,20 @@ state 28
 
 state 29
 
-   13 directive: KW_CD . $@3 FILE_NAME_STRING
+   13 directive: KW_CD . @3 FILE_NAME_STRING
 
-    $default  reduce using rule 12 ($@3)
+    $default  reduce using rule 12 (@3)
 
-    $@3  go to state 105
+    @3  go to state 105
 
 
 state 30
 
-   15 directive: KW_PUSHD . $@4 FILE_NAME_STRING
+   15 directive: KW_PUSHD . @4 FILE_NAME_STRING
 
-    $default  reduce using rule 14 ($@4)
+    $default  reduce using rule 14 (@4)
 
-    $@4  go to state 106
+    @4  go to state 106
 
 
 state 31
@@ -2003,20 +2004,20 @@ state 31
 
 state 32
 
-   18 directive: KW_LS . $@5 UNINTERPRETED_STRING
+   18 directive: KW_LS . @5 UNINTERPRETED_STRING
 
-    $default  reduce using rule 17 ($@5)
+    $default  reduce using rule 17 (@5)
 
-    $@5  go to state 107
+    @5  go to state 107
 
 
 state 33
 
-   10 directive: KW_LOAD . $@2 FILE_NAME_STRING
+   10 directive: KW_LOAD . @2 FILE_NAME_STRING
 
-    $default  reduce using rule 9 ($@2)
+    $default  reduce using rule 9 (@2)
 
-    $@2  go to state 108
+    @2  go to state 108
 
 
 state 34
@@ -2035,20 +2036,20 @@ state 35
 
 state 36
 
-   91 parenBubble: '(' . $@23 ')'
+   91 parenBubble: '(' . @23 ')'
 
-    $default  reduce using rule 90 ($@23)
+    $default  reduce using rule 90 (@23)
 
-    $@23  go to state 109
+    @23  go to state 109
 
 
 state 37
 
-    8 directive: KW_IN . $@1 FILE_NAME_STRING
+    8 directive: KW_IN . @1 FILE_NAME_STRING
 
-    $default  reduce using rule 7 ($@1)
+    $default  reduce using rule 7 (@1)
 
-    $@1  go to state 110
+    @1  go to state 110
 
 
 state 38
@@ -2095,11 +2096,11 @@ state 43
 
 state 44
 
-   94 module: startModule . $@24 token $@25 parameters expectedIs decList KW_ENDM
+   94 module: startModule . @24 token @25 parameters expectedIs decList KW_ENDM
 
-    $default  reduce using rule 92 ($@24)
+    $default  reduce using rule 92 (@24)
 
-    $@24  go to state 112
+    @24  go to state 112
 
 
 state 45
@@ -2111,29 +2112,29 @@ state 45
 
 state 46
 
-  367 command: search . $@70 numbersModuleTerm
+  367 command: search . @70 numbersModuleTerm
 
-    $default  reduce using rule 366 ($@70)
+    $default  reduce using rule 366 (@70)
 
-    $@70  go to state 113
+    @70  go to state 113
 
 
 state 47
 
-  369 command: match . $@71 numberModuleTerm
+  369 command: match . @71 numberModuleTerm
 
-    $default  reduce using rule 368 ($@71)
+    $default  reduce using rule 368 (@71)
 
-    $@71  go to state 114
+    @71  go to state 114
 
 
 state 48
 
-  357 command: optDebug . KW_REDUCE $@65 moduleAndTerm
-  359        | optDebug . KW_REWRITE $@66 numberModuleTerm
-  361        | optDebug . KW_EREWRITE $@67 numbersModuleTerm
-  363        | optDebug . KW_FREWRITE $@68 numbersModuleTerm
-  365        | optDebug . KW_SREWRITE $@69 numberModuleTerm
+  357 command: optDebug . KW_REDUCE @65 moduleAndTerm
+  359        | optDebug . KW_REWRITE @66 numberModuleTerm
+  361        | optDebug . KW_EREWRITE @67 numbersModuleTerm
+  363        | optDebug . KW_FREWRITE @68 numbersModuleTerm
+  365        | optDebug . KW_SREWRITE @69 numberModuleTerm
   372        | optDebug . KW_CONTINUE optNumber '.'
 
     KW_REDUCE    shift, and go to state 115
@@ -2146,14 +2147,14 @@ state 48
 
 state 49
 
-  448 command: error $@95 . '.'
+  448 command: error @95 . '.'
 
     '.'  shift, and go to state 121
 
 
 state 50
 
-   71 view: KW_VIEW $@16 . token KW_FROM moduleExpr $@17 KW_TO moduleExpr $@18 expectedIs viewDecList KW_ENDV
+   71 view: KW_VIEW @16 . token KW_FROM moduleExpr @17 KW_TO moduleExpr @18 expectedIs viewDecList KW_ENDV
 
     KW_ENDM       shift, and go to state 122
     KW_IMPORT     shift, and go to state 123
@@ -2233,7 +2234,7 @@ state 50
 
 state 51
 
-  351 command: KW_PARSE $@62 . moduleAndTerm
+  351 command: KW_PARSE @62 . moduleAndTerm
 
     ':'          shift, and go to state 195
     '('          shift, and go to state 196
@@ -2253,7 +2254,7 @@ state 51
 
 state 52
 
-  374 command: KW_LOOP $@73 . moduleAndTerm
+  374 command: KW_LOOP @73 . moduleAndTerm
 
     ':'          shift, and go to state 195
     '('          shift, and go to state 196
@@ -2273,7 +2274,7 @@ state 52
 
 state 53
 
-  371 command: KW_UNIFY $@72 . numberModuleTerm
+  371 command: KW_UNIFY @72 . numberModuleTerm
 
     ':'          shift, and go to state 209
     '('          shift, and go to state 196
@@ -2293,7 +2294,7 @@ state 53
 
 state 54
 
-  434 command: KW_SET KW_OMOD . KW_INCLUDE $@93 cSimpleTokenBarDot $@94 polarity '.'
+  434 command: KW_SET KW_OMOD . KW_INCLUDE @93 cSimpleTokenBarDot @94 polarity '.'
 
     KW_INCLUDE  shift, and go to state 219
 
@@ -2446,29 +2447,29 @@ state 67
 
 state 68
 
-  431 command: KW_SET importMode . $@91 cSimpleTokenBarDot $@92 polarity '.'
+  431 command: KW_SET importMode . @91 cSimpleTokenBarDot @92 polarity '.'
 
-    $default  reduce using rule 429 ($@91)
+    $default  reduce using rule 429 (@91)
 
-    $@91  go to state 260
+    @91  go to state 260
 
 
 state 69
 
-  386 command: KW_SHOW KW_MOD . $@78 endBubble
+  386 command: KW_SHOW KW_MOD . @78 endBubble
 
-    $default  reduce using rule 385 ($@78)
+    $default  reduce using rule 385 (@78)
 
-    $@78  go to state 261
+    @78  go to state 261
 
 
 state 70
 
-  392 command: KW_SHOW KW_VIEW . $@81 endBubble
+  392 command: KW_SHOW KW_VIEW . @81 endBubble
 
-    $default  reduce using rule 391 ($@81)
+    $default  reduce using rule 391 (@81)
 
-    $@81  go to state 262
+    @81  go to state 262
 
 
 state 71
@@ -2489,11 +2490,11 @@ state 72
 
 state 73
 
-  388 command: KW_SHOW KW_MODULE . $@79 endBubble
+  388 command: KW_SHOW KW_MODULE . @79 endBubble
 
-    $default  reduce using rule 387 ($@79)
+    $default  reduce using rule 387 (@79)
 
-    $@79  go to state 266
+    @79  go to state 266
 
 
 state 74
@@ -2512,92 +2513,92 @@ state 75
 
 state 76
 
-  390 command: KW_SHOW KW_ALL . $@80 endBubble
+  390 command: KW_SHOW KW_ALL . @80 endBubble
 
-    $default  reduce using rule 389 ($@80)
+    $default  reduce using rule 389 (@80)
 
-    $@80  go to state 269
+    @80  go to state 269
 
 
 state 77
 
-  396 command: KW_SHOW KW_SORTS . $@82 endBubble
+  396 command: KW_SHOW KW_SORTS . @82 endBubble
 
-    $default  reduce using rule 395 ($@82)
+    $default  reduce using rule 395 (@82)
 
-    $@82  go to state 270
+    @82  go to state 270
 
 
 state 78
 
-  398 command: KW_SHOW KW_OPS2 . $@83 endBubble
+  398 command: KW_SHOW KW_OPS2 . @83 endBubble
 
-    $default  reduce using rule 397 ($@83)
+    $default  reduce using rule 397 (@83)
 
-    $@83  go to state 271
+    @83  go to state 271
 
 
 state 79
 
-  400 command: KW_SHOW KW_VARS . $@84 endBubble
+  400 command: KW_SHOW KW_VARS . @84 endBubble
 
-    $default  reduce using rule 399 ($@84)
+    $default  reduce using rule 399 (@84)
 
-    $@84  go to state 272
+    @84  go to state 272
 
 
 state 80
 
-  402 command: KW_SHOW KW_MBS . $@85 endBubble
+  402 command: KW_SHOW KW_MBS . @85 endBubble
 
-    $default  reduce using rule 401 ($@85)
+    $default  reduce using rule 401 (@85)
 
-    $@85  go to state 273
+    @85  go to state 273
 
 
 state 81
 
-  404 command: KW_SHOW KW_EQS . $@86 endBubble
+  404 command: KW_SHOW KW_EQS . @86 endBubble
 
-    $default  reduce using rule 403 ($@86)
+    $default  reduce using rule 403 (@86)
 
-    $@86  go to state 274
+    @86  go to state 274
 
 
 state 82
 
-  406 command: KW_SHOW KW_RLS . $@87 endBubble
+  406 command: KW_SHOW KW_RLS . @87 endBubble
 
-    $default  reduce using rule 405 ($@87)
+    $default  reduce using rule 405 (@87)
 
-    $@87  go to state 275
+    @87  go to state 275
 
 
 state 83
 
-  408 command: KW_SHOW KW_SUMMARY . $@88 endBubble
+  408 command: KW_SHOW KW_SUMMARY . @88 endBubble
 
-    $default  reduce using rule 407 ($@88)
+    $default  reduce using rule 407 (@88)
 
-    $@88  go to state 276
+    @88  go to state 276
 
 
 state 84
 
-  410 command: KW_SHOW KW_KINDS . $@89 endBubble
+  410 command: KW_SHOW KW_KINDS . @89 endBubble
 
-    $default  reduce using rule 409 ($@89)
+    $default  reduce using rule 409 (@89)
 
-    $@89  go to state 277
+    @89  go to state 277
 
 
 state 85
 
-  415 command: KW_SHOW KW_PROFILE . $@90 endBubble
+  415 command: KW_SHOW KW_PROFILE . @90 endBubble
 
-    $default  reduce using rule 414 ($@90)
+    $default  reduce using rule 414 (@90)
 
-    $@90  go to state 278
+    @90  go to state 278
 
 
 state 86
@@ -2630,25 +2631,25 @@ state 89
 
 state 90
 
-  377 command: KW_TRACE select . $@74 opSelect
+  377 command: KW_TRACE select . @74 opSelect
 
-    $default  reduce using rule 376 ($@74)
+    $default  reduce using rule 376 (@74)
 
-    $@74  go to state 279
+    @74  go to state 279
 
 
 state 91
 
-  379 command: KW_TRACE exclude . $@75 opSelect
+  379 command: KW_TRACE exclude . @75 opSelect
 
-    $default  reduce using rule 378 ($@75)
+    $default  reduce using rule 378 (@75)
 
-    $@75  go to state 280
+    @75  go to state 280
 
 
 state 92
 
-  347 command: KW_SELECT $@60 . endBubble
+  347 command: KW_SELECT @60 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -2672,20 +2673,20 @@ state 94
 
 state 95
 
-  383 command: KW_PRINT conceal . $@77 opSelect
+  383 command: KW_PRINT conceal . @77 opSelect
 
-    $default  reduce using rule 382 ($@77)
+    $default  reduce using rule 382 (@77)
 
-    $@77  go to state 284
+    @77  go to state 284
 
 
 state 96
 
-  381 command: KW_BREAK select . $@76 opSelect
+  381 command: KW_BREAK select . @76 opSelect
 
-    $default  reduce using rule 380 ($@76)
+    $default  reduce using rule 380 (@76)
 
-    $@76  go to state 285
+    @76  go to state 285
 
 
 state 97
@@ -2725,7 +2726,7 @@ state 101
 
 state 102
 
-  353 command: KW_CREDUCE $@63 . moduleAndTerm
+  353 command: KW_CREDUCE @63 . moduleAndTerm
 
     ':'          shift, and go to state 195
     '('          shift, and go to state 196
@@ -2745,7 +2746,7 @@ state 102
 
 state 103
 
-  355 command: KW_SREDUCE $@64 . moduleAndTerm
+  355 command: KW_SREDUCE @64 . moduleAndTerm
 
     ':'          shift, and go to state 195
     '('          shift, and go to state 196
@@ -2765,7 +2766,7 @@ state 103
 
 state 104
 
-  349 command: KW_DUMP $@61 . endBubble
+  349 command: KW_DUMP @61 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -2775,42 +2776,42 @@ state 104
 
 state 105
 
-   13 directive: KW_CD $@3 . FILE_NAME_STRING
+   13 directive: KW_CD @3 . FILE_NAME_STRING
 
     FILE_NAME_STRING  shift, and go to state 290
 
 
 state 106
 
-   15 directive: KW_PUSHD $@4 . FILE_NAME_STRING
+   15 directive: KW_PUSHD @4 . FILE_NAME_STRING
 
     FILE_NAME_STRING  shift, and go to state 291
 
 
 state 107
 
-   18 directive: KW_LS $@5 . UNINTERPRETED_STRING
+   18 directive: KW_LS @5 . UNINTERPRETED_STRING
 
     UNINTERPRETED_STRING  shift, and go to state 292
 
 
 state 108
 
-   10 directive: KW_LOAD $@2 . FILE_NAME_STRING
+   10 directive: KW_LOAD @2 . FILE_NAME_STRING
 
     FILE_NAME_STRING  shift, and go to state 293
 
 
 state 109
 
-   91 parenBubble: '(' $@23 . ')'
+   91 parenBubble: '(' @23 . ')'
 
     ')'  shift, and go to state 294
 
 
 state 110
 
-    8 directive: KW_IN $@1 . FILE_NAME_STRING
+    8 directive: KW_IN @1 . FILE_NAME_STRING
 
     FILE_NAME_STRING  shift, and go to state 295
 
@@ -2824,7 +2825,7 @@ state 111
 
 state 112
 
-   94 module: startModule $@24 . token $@25 parameters expectedIs decList KW_ENDM
+   94 module: startModule @24 . token @25 parameters expectedIs decList KW_ENDM
 
     KW_ENDM       shift, and go to state 122
     KW_IMPORT     shift, and go to state 123
@@ -2904,7 +2905,7 @@ state 112
 
 state 113
 
-  367 command: search $@70 . numbersModuleTerm
+  367 command: search @70 . numbersModuleTerm
 
     ':'          shift, and go to state 209
     '('          shift, and go to state 196
@@ -2924,7 +2925,7 @@ state 113
 
 state 114
 
-  369 command: match $@71 . numberModuleTerm
+  369 command: match @71 . numberModuleTerm
 
     ':'          shift, and go to state 209
     '('          shift, and go to state 196
@@ -2944,47 +2945,47 @@ state 114
 
 state 115
 
-  357 command: optDebug KW_REDUCE . $@65 moduleAndTerm
+  357 command: optDebug KW_REDUCE . @65 moduleAndTerm
 
-    $default  reduce using rule 356 ($@65)
+    $default  reduce using rule 356 (@65)
 
-    $@65  go to state 302
+    @65  go to state 302
 
 
 state 116
 
-  359 command: optDebug KW_REWRITE . $@66 numberModuleTerm
+  359 command: optDebug KW_REWRITE . @66 numberModuleTerm
 
-    $default  reduce using rule 358 ($@66)
+    $default  reduce using rule 358 (@66)
 
-    $@66  go to state 303
+    @66  go to state 303
 
 
 state 117
 
-  361 command: optDebug KW_EREWRITE . $@67 numbersModuleTerm
+  361 command: optDebug KW_EREWRITE . @67 numbersModuleTerm
 
-    $default  reduce using rule 360 ($@67)
+    $default  reduce using rule 360 (@67)
 
-    $@67  go to state 304
+    @67  go to state 304
 
 
 state 118
 
-  363 command: optDebug KW_FREWRITE . $@68 numbersModuleTerm
+  363 command: optDebug KW_FREWRITE . @68 numbersModuleTerm
 
-    $default  reduce using rule 362 ($@68)
+    $default  reduce using rule 362 (@68)
 
-    $@68  go to state 305
+    @68  go to state 305
 
 
 state 119
 
-  365 command: optDebug KW_SREWRITE . $@69 numberModuleTerm
+  365 command: optDebug KW_SREWRITE . @69 numberModuleTerm
 
-    $default  reduce using rule 364 ($@69)
+    $default  reduce using rule 364 (@69)
 
-    $@69  go to state 306
+    @69  go to state 306
 
 
 state 120
@@ -3000,7 +3001,7 @@ state 120
 
 state 121
 
-  448 command: error $@95 '.' .
+  448 command: error @95 '.' .
 
     $default  reduce using rule 448 (command)
 
@@ -3462,7 +3463,7 @@ state 186
 
 state 187
 
-   71 view: KW_VIEW $@16 token . KW_FROM moduleExpr $@17 KW_TO moduleExpr $@18 expectedIs viewDecList KW_ENDV
+   71 view: KW_VIEW @16 token . KW_FROM moduleExpr @17 KW_TO moduleExpr @18 expectedIs viewDecList KW_ENDV
 
     KW_FROM  shift, and go to state 309
 
@@ -3525,11 +3526,11 @@ state 195
 
 state 196
 
-  554 initialEndBubble: '(' . $@121 endBubble
+  554 initialEndBubble: '(' . @121 endBubble
 
-    $default  reduce using rule 553 ($@121)
+    $default  reduce using rule 553 (@121)
 
-    $@121  go to state 310
+    @121  go to state 310
 
 
 state 197
@@ -3562,11 +3563,11 @@ state 200
 
 state 201
 
-  556 initialEndBubble: KW_IN . $@122 inEnd
+  556 initialEndBubble: KW_IN . @122 inEnd
 
-    $default  reduce using rule 555 ($@122)
+    $default  reduce using rule 555 (@122)
 
-    $@122  go to state 311
+    @122  go to state 311
 
 
 state 202
@@ -3592,7 +3593,7 @@ state 204
 
 state 205
 
-  351 command: KW_PARSE $@62 moduleAndTerm .
+  351 command: KW_PARSE @62 moduleAndTerm .
 
     $default  reduce using rule 351 (command)
 
@@ -3606,16 +3607,16 @@ state 206
 
 state 207
 
-  492 moduleAndTerm: cTokenBarIn . $@96 endBubble
+  492 moduleAndTerm: cTokenBarIn . @96 endBubble
 
-    $default  reduce using rule 491 ($@96)
+    $default  reduce using rule 491 (@96)
 
-    $@96  go to state 312
+    @96  go to state 312
 
 
 state 208
 
-  374 command: KW_LOOP $@73 moduleAndTerm .
+  374 command: KW_LOOP @73 moduleAndTerm .
 
     $default  reduce using rule 374 (command)
 
@@ -3636,11 +3637,11 @@ state 210
 
 state 211
 
-  497 numberModuleTerm: '[' . $@98 numberModuleTerm1
+  497 numberModuleTerm: '[' . @98 numberModuleTerm1
 
-    $default  reduce using rule 496 ($@98)
+    $default  reduce using rule 496 (@98)
 
-    $@98  go to state 313
+    @98  go to state 313
 
 
 state 212
@@ -3673,7 +3674,7 @@ state 215
 
 state 216
 
-  371 command: KW_UNIFY $@72 numberModuleTerm .
+  371 command: KW_UNIFY @72 numberModuleTerm .
 
     $default  reduce using rule 371 (command)
 
@@ -3687,20 +3688,20 @@ state 217
 
 state 218
 
-  500 numberModuleTerm: cTokenBarLeftIn . $@99 endBubble
+  500 numberModuleTerm: cTokenBarLeftIn . @99 endBubble
 
-    $default  reduce using rule 499 ($@99)
+    $default  reduce using rule 499 (@99)
 
-    $@99  go to state 314
+    @99  go to state 314
 
 
 state 219
 
-  434 command: KW_SET KW_OMOD KW_INCLUDE . $@93 cSimpleTokenBarDot $@94 polarity '.'
+  434 command: KW_SET KW_OMOD KW_INCLUDE . @93 cSimpleTokenBarDot @94 polarity '.'
 
-    $default  reduce using rule 432 ($@93)
+    $default  reduce using rule 432 (@93)
 
-    $@93  go to state 315
+    @93  go to state 315
 
 
 state 220
@@ -4033,7 +4034,7 @@ state 259
 
 state 260
 
-  431 command: KW_SET importMode $@91 . cSimpleTokenBarDot $@92 polarity '.'
+  431 command: KW_SET importMode @91 . cSimpleTokenBarDot @92 polarity '.'
 
     ':'         shift, and go to state 339
     '['         shift, and go to state 340
@@ -4048,7 +4049,7 @@ state 260
 
 state 261
 
-  386 command: KW_SHOW KW_MOD $@78 . endBubble
+  386 command: KW_SHOW KW_MOD @78 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -4058,7 +4059,7 @@ state 261
 
 state 262
 
-  392 command: KW_SHOW KW_VIEW $@81 . endBubble
+  392 command: KW_SHOW KW_VIEW @81 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -4089,7 +4090,7 @@ state 265
 
 state 266
 
-  388 command: KW_SHOW KW_MODULE $@79 . endBubble
+  388 command: KW_SHOW KW_MODULE @79 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -4113,7 +4114,7 @@ state 268
 
 state 269
 
-  390 command: KW_SHOW KW_ALL $@80 . endBubble
+  390 command: KW_SHOW KW_ALL @80 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -4123,7 +4124,7 @@ state 269
 
 state 270
 
-  396 command: KW_SHOW KW_SORTS $@82 . endBubble
+  396 command: KW_SHOW KW_SORTS @82 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -4133,7 +4134,7 @@ state 270
 
 state 271
 
-  398 command: KW_SHOW KW_OPS2 $@83 . endBubble
+  398 command: KW_SHOW KW_OPS2 @83 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -4143,7 +4144,7 @@ state 271
 
 state 272
 
-  400 command: KW_SHOW KW_VARS $@84 . endBubble
+  400 command: KW_SHOW KW_VARS @84 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -4153,7 +4154,7 @@ state 272
 
 state 273
 
-  402 command: KW_SHOW KW_MBS $@85 . endBubble
+  402 command: KW_SHOW KW_MBS @85 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -4163,7 +4164,7 @@ state 273
 
 state 274
 
-  404 command: KW_SHOW KW_EQS $@86 . endBubble
+  404 command: KW_SHOW KW_EQS @86 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -4173,7 +4174,7 @@ state 274
 
 state 275
 
-  406 command: KW_SHOW KW_RLS $@87 . endBubble
+  406 command: KW_SHOW KW_RLS @87 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -4183,7 +4184,7 @@ state 275
 
 state 276
 
-  408 command: KW_SHOW KW_SUMMARY $@88 . endBubble
+  408 command: KW_SHOW KW_SUMMARY @88 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -4193,7 +4194,7 @@ state 276
 
 state 277
 
-  410 command: KW_SHOW KW_KINDS $@89 . endBubble
+  410 command: KW_SHOW KW_KINDS @89 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -4203,7 +4204,7 @@ state 277
 
 state 278
 
-  415 command: KW_SHOW KW_PROFILE $@90 . endBubble
+  415 command: KW_SHOW KW_PROFILE @90 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -4213,7 +4214,7 @@ state 278
 
 state 279
 
-  377 command: KW_TRACE select $@74 . opSelect
+  377 command: KW_TRACE select @74 . opSelect
 
     ':'          shift, and go to state 339
     '('          shift, and go to state 36
@@ -4235,7 +4236,7 @@ state 279
 
 state 280
 
-  379 command: KW_TRACE exclude $@75 . opSelect
+  379 command: KW_TRACE exclude @75 . opSelect
 
     ':'          shift, and go to state 339
     '('          shift, and go to state 36
@@ -4271,14 +4272,14 @@ state 282
 
 state 283
 
-  347 command: KW_SELECT $@60 endBubble .
+  347 command: KW_SELECT @60 endBubble .
 
     $default  reduce using rule 347 (command)
 
 
 state 284
 
-  383 command: KW_PRINT conceal $@77 . opSelect
+  383 command: KW_PRINT conceal @77 . opSelect
 
     ':'          shift, and go to state 339
     '('          shift, and go to state 36
@@ -4300,7 +4301,7 @@ state 284
 
 state 285
 
-  381 command: KW_BREAK select $@76 . opSelect
+  381 command: KW_BREAK select @76 . opSelect
 
     ':'          shift, and go to state 339
     '('          shift, and go to state 36
@@ -4329,88 +4330,88 @@ state 286
 
 state 287
 
-  353 command: KW_CREDUCE $@63 moduleAndTerm .
+  353 command: KW_CREDUCE @63 moduleAndTerm .
 
     $default  reduce using rule 353 (command)
 
 
 state 288
 
-  355 command: KW_SREDUCE $@64 moduleAndTerm .
+  355 command: KW_SREDUCE @64 moduleAndTerm .
 
     $default  reduce using rule 355 (command)
 
 
 state 289
 
-  349 command: KW_DUMP $@61 endBubble .
+  349 command: KW_DUMP @61 endBubble .
 
     $default  reduce using rule 349 (command)
 
 
 state 290
 
-   13 directive: KW_CD $@3 FILE_NAME_STRING .
+   13 directive: KW_CD @3 FILE_NAME_STRING .
 
     $default  reduce using rule 13 (directive)
 
 
 state 291
 
-   15 directive: KW_PUSHD $@4 FILE_NAME_STRING .
+   15 directive: KW_PUSHD @4 FILE_NAME_STRING .
 
     $default  reduce using rule 15 (directive)
 
 
 state 292
 
-   18 directive: KW_LS $@5 UNINTERPRETED_STRING .
+   18 directive: KW_LS @5 UNINTERPRETED_STRING .
 
     $default  reduce using rule 18 (directive)
 
 
 state 293
 
-   10 directive: KW_LOAD $@2 FILE_NAME_STRING .
+   10 directive: KW_LOAD @2 FILE_NAME_STRING .
 
     $default  reduce using rule 10 (directive)
 
 
 state 294
 
-   91 parenBubble: '(' $@23 ')' .
+   91 parenBubble: '(' @23 ')' .
 
     $default  reduce using rule 91 (parenBubble)
 
 
 state 295
 
-    8 directive: KW_IN $@1 FILE_NAME_STRING .
+    8 directive: KW_IN @1 FILE_NAME_STRING .
 
     $default  reduce using rule 8 (directive)
 
 
 state 296
 
-   94 module: startModule $@24 token . $@25 parameters expectedIs decList KW_ENDM
+   94 module: startModule @24 token . @25 parameters expectedIs decList KW_ENDM
 
-    $default  reduce using rule 93 ($@25)
+    $default  reduce using rule 93 (@25)
 
-    $@25  go to state 374
+    @25  go to state 374
 
 
 state 297
 
-  512 numbersModuleTerm: '[' . $@104 numbersModuleTerm1
+  512 numbersModuleTerm: '[' . @104 numbersModuleTerm1
 
-    $default  reduce using rule 511 ($@104)
+    $default  reduce using rule 511 (@104)
 
-    $@104  go to state 375
+    @104  go to state 375
 
 
 state 298
 
-  367 command: search $@70 numbersModuleTerm .
+  367 command: search @70 numbersModuleTerm .
 
     $default  reduce using rule 367 (command)
 
@@ -4424,23 +4425,23 @@ state 299
 
 state 300
 
-  515 numbersModuleTerm: cTokenBarLeftIn . $@105 endBubble
+  515 numbersModuleTerm: cTokenBarLeftIn . @105 endBubble
 
-    $default  reduce using rule 514 ($@105)
+    $default  reduce using rule 514 (@105)
 
-    $@105  go to state 376
+    @105  go to state 376
 
 
 state 301
 
-  369 command: match $@71 numberModuleTerm .
+  369 command: match @71 numberModuleTerm .
 
     $default  reduce using rule 369 (command)
 
 
 state 302
 
-  357 command: optDebug KW_REDUCE $@65 . moduleAndTerm
+  357 command: optDebug KW_REDUCE @65 . moduleAndTerm
 
     ':'          shift, and go to state 195
     '('          shift, and go to state 196
@@ -4460,7 +4461,7 @@ state 302
 
 state 303
 
-  359 command: optDebug KW_REWRITE $@66 . numberModuleTerm
+  359 command: optDebug KW_REWRITE @66 . numberModuleTerm
 
     ':'          shift, and go to state 209
     '('          shift, and go to state 196
@@ -4480,7 +4481,7 @@ state 303
 
 state 304
 
-  361 command: optDebug KW_EREWRITE $@67 . numbersModuleTerm
+  361 command: optDebug KW_EREWRITE @67 . numbersModuleTerm
 
     ':'          shift, and go to state 209
     '('          shift, and go to state 196
@@ -4500,7 +4501,7 @@ state 304
 
 state 305
 
-  363 command: optDebug KW_FREWRITE $@68 . numbersModuleTerm
+  363 command: optDebug KW_FREWRITE @68 . numbersModuleTerm
 
     ':'          shift, and go to state 209
     '('          shift, and go to state 196
@@ -4520,7 +4521,7 @@ state 305
 
 state 306
 
-  365 command: optDebug KW_SREWRITE $@69 . numberModuleTerm
+  365 command: optDebug KW_SREWRITE @69 . numberModuleTerm
 
     ':'          shift, and go to state 209
     '('          shift, and go to state 196
@@ -4554,7 +4555,7 @@ state 308
 
 state 309
 
-   71 view: KW_VIEW $@16 token KW_FROM . moduleExpr $@17 KW_TO moduleExpr $@18 expectedIs viewDecList KW_ENDV
+   71 view: KW_VIEW @16 token KW_FROM . moduleExpr @17 KW_TO moduleExpr @18 expectedIs viewDecList KW_ENDV
 
     KW_ENDM       shift, and go to state 122
     KW_IMPORT     shift, and go to state 123
@@ -4641,7 +4642,7 @@ state 309
 
 state 310
 
-  554 initialEndBubble: '(' $@121 . endBubble
+  554 initialEndBubble: '(' @121 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -4651,7 +4652,7 @@ state 310
 
 state 311
 
-  556 initialEndBubble: KW_IN $@122 . inEnd
+  556 initialEndBubble: KW_IN @122 . inEnd
 
     ':'          shift, and go to state 392
     '.'          shift, and go to state 281
@@ -4663,7 +4664,7 @@ state 311
 
 state 312
 
-  492 moduleAndTerm: cTokenBarIn $@96 . endBubble
+  492 moduleAndTerm: cTokenBarIn @96 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -4673,7 +4674,7 @@ state 312
 
 state 313
 
-  497 numberModuleTerm: '[' $@98 . numberModuleTerm1
+  497 numberModuleTerm: '[' @98 . numberModuleTerm1
 
     ':'          shift, and go to state 396
     '('          shift, and go to state 397
@@ -4694,7 +4695,7 @@ state 313
 
 state 314
 
-  500 numberModuleTerm: cTokenBarLeftIn $@99 . endBubble
+  500 numberModuleTerm: cTokenBarLeftIn @99 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -4704,7 +4705,7 @@ state 314
 
 state 315
 
-  434 command: KW_SET KW_OMOD KW_INCLUDE $@93 . cSimpleTokenBarDot $@94 polarity '.'
+  434 command: KW_SET KW_OMOD KW_INCLUDE @93 . cSimpleTokenBarDot @94 polarity '.'
 
     ':'         shift, and go to state 339
     '['         shift, and go to state 340
@@ -4938,23 +4939,23 @@ state 345
 
 state 346
 
-  431 command: KW_SET importMode $@91 cSimpleTokenBarDot . $@92 polarity '.'
+  431 command: KW_SET importMode @91 cSimpleTokenBarDot . @92 polarity '.'
 
-    $default  reduce using rule 430 ($@92)
+    $default  reduce using rule 430 (@92)
 
-    $@92  go to state 427
+    @92  go to state 427
 
 
 state 347
 
-  386 command: KW_SHOW KW_MOD $@78 endBubble .
+  386 command: KW_SHOW KW_MOD @78 endBubble .
 
     $default  reduce using rule 386 (command)
 
 
 state 348
 
-  392 command: KW_SHOW KW_VIEW $@81 endBubble .
+  392 command: KW_SHOW KW_VIEW @81 endBubble .
 
     $default  reduce using rule 392 (command)
 
@@ -4982,77 +4983,77 @@ state 351
 
 state 352
 
-  388 command: KW_SHOW KW_MODULE $@79 endBubble .
+  388 command: KW_SHOW KW_MODULE @79 endBubble .
 
     $default  reduce using rule 388 (command)
 
 
 state 353
 
-  390 command: KW_SHOW KW_ALL $@80 endBubble .
+  390 command: KW_SHOW KW_ALL @80 endBubble .
 
     $default  reduce using rule 390 (command)
 
 
 state 354
 
-  396 command: KW_SHOW KW_SORTS $@82 endBubble .
+  396 command: KW_SHOW KW_SORTS @82 endBubble .
 
     $default  reduce using rule 396 (command)
 
 
 state 355
 
-  398 command: KW_SHOW KW_OPS2 $@83 endBubble .
+  398 command: KW_SHOW KW_OPS2 @83 endBubble .
 
     $default  reduce using rule 398 (command)
 
 
 state 356
 
-  400 command: KW_SHOW KW_VARS $@84 endBubble .
+  400 command: KW_SHOW KW_VARS @84 endBubble .
 
     $default  reduce using rule 400 (command)
 
 
 state 357
 
-  402 command: KW_SHOW KW_MBS $@85 endBubble .
+  402 command: KW_SHOW KW_MBS @85 endBubble .
 
     $default  reduce using rule 402 (command)
 
 
 state 358
 
-  404 command: KW_SHOW KW_EQS $@86 endBubble .
+  404 command: KW_SHOW KW_EQS @86 endBubble .
 
     $default  reduce using rule 404 (command)
 
 
 state 359
 
-  406 command: KW_SHOW KW_RLS $@87 endBubble .
+  406 command: KW_SHOW KW_RLS @87 endBubble .
 
     $default  reduce using rule 406 (command)
 
 
 state 360
 
-  408 command: KW_SHOW KW_SUMMARY $@88 endBubble .
+  408 command: KW_SHOW KW_SUMMARY @88 endBubble .
 
     $default  reduce using rule 408 (command)
 
 
 state 361
 
-  410 command: KW_SHOW KW_KINDS $@89 endBubble .
+  410 command: KW_SHOW KW_KINDS @89 endBubble .
 
     $default  reduce using rule 410 (command)
 
 
 state 362
 
-  415 command: KW_SHOW KW_PROFILE $@90 endBubble .
+  415 command: KW_SHOW KW_PROFILE @90 endBubble .
 
     $default  reduce using rule 415 (command)
 
@@ -5073,7 +5074,7 @@ state 364
 
 state 365
 
-  377 command: KW_TRACE select $@74 opSelect .
+  377 command: KW_TRACE select @74 opSelect .
 
     $default  reduce using rule 377 (command)
 
@@ -5124,21 +5125,21 @@ state 369
 
 state 370
 
-  379 command: KW_TRACE exclude $@75 opSelect .
+  379 command: KW_TRACE exclude @75 opSelect .
 
     $default  reduce using rule 379 (command)
 
 
 state 371
 
-  383 command: KW_PRINT conceal $@77 opSelect .
+  383 command: KW_PRINT conceal @77 opSelect .
 
     $default  reduce using rule 383 (command)
 
 
 state 372
 
-  381 command: KW_BREAK select $@76 opSelect .
+  381 command: KW_BREAK select @76 opSelect .
 
     $default  reduce using rule 381 (command)
 
@@ -5152,7 +5153,7 @@ state 373
 
 state 374
 
-   94 module: startModule $@24 token $@25 . parameters expectedIs decList KW_ENDM
+   94 module: startModule @24 token @25 . parameters expectedIs decList KW_ENDM
 
     '{'  shift, and go to state 433
 
@@ -5163,7 +5164,7 @@ state 374
 
 state 375
 
-  512 numbersModuleTerm: '[' $@104 . numbersModuleTerm1
+  512 numbersModuleTerm: '[' @104 . numbersModuleTerm1
 
     ':'          shift, and go to state 435
     '('          shift, and go to state 397
@@ -5184,7 +5185,7 @@ state 375
 
 state 376
 
-  515 numbersModuleTerm: cTokenBarLeftIn $@105 . endBubble
+  515 numbersModuleTerm: cTokenBarLeftIn @105 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -5194,35 +5195,35 @@ state 376
 
 state 377
 
-  357 command: optDebug KW_REDUCE $@65 moduleAndTerm .
+  357 command: optDebug KW_REDUCE @65 moduleAndTerm .
 
     $default  reduce using rule 357 (command)
 
 
 state 378
 
-  359 command: optDebug KW_REWRITE $@66 numberModuleTerm .
+  359 command: optDebug KW_REWRITE @66 numberModuleTerm .
 
     $default  reduce using rule 359 (command)
 
 
 state 379
 
-  361 command: optDebug KW_EREWRITE $@67 numbersModuleTerm .
+  361 command: optDebug KW_EREWRITE @67 numbersModuleTerm .
 
     $default  reduce using rule 361 (command)
 
 
 state 380
 
-  363 command: optDebug KW_FREWRITE $@68 numbersModuleTerm .
+  363 command: optDebug KW_FREWRITE @68 numbersModuleTerm .
 
     $default  reduce using rule 363 (command)
 
 
 state 381
 
-  365 command: optDebug KW_SREWRITE $@69 numberModuleTerm .
+  365 command: optDebug KW_SREWRITE @69 numberModuleTerm .
 
     $default  reduce using rule 365 (command)
 
@@ -5324,13 +5325,13 @@ state 383
 state 384
 
    29 moduleExpr: moduleExpr . '+' moduleExpr
-   71 view: KW_VIEW $@16 token KW_FROM moduleExpr . $@17 KW_TO moduleExpr $@18 expectedIs viewDecList KW_ENDV
+   71 view: KW_VIEW @16 token KW_FROM moduleExpr . @17 KW_TO moduleExpr @18 expectedIs viewDecList KW_ENDV
 
     '+'  shift, and go to state 447
 
-    $default  reduce using rule 69 ($@17)
+    $default  reduce using rule 69 (@17)
 
-    $@17  go to state 448
+    @17  go to state 448
 
 
 state 385
@@ -5346,7 +5347,7 @@ state 385
 state 386
 
    30 moduleExpr2: moduleExpr3 .
-   37 instantExpr: moduleExpr3 . '{' $@6 argList '}'
+   37 instantExpr: moduleExpr3 . '{' @6 argList '}'
 
     '{'  shift, and go to state 450
 
@@ -5383,18 +5384,18 @@ state 390
 
 state 391
 
-  554 initialEndBubble: '(' $@121 endBubble .
+  554 initialEndBubble: '(' @121 endBubble .
 
     $default  reduce using rule 554 (initialEndBubble)
 
 
 state 392
 
-  494 inEnd: ':' . $@97 endBubble
+  494 inEnd: ':' . @97 endBubble
 
-    $default  reduce using rule 493 ($@97)
+    $default  reduce using rule 493 (@97)
 
-    $@97  go to state 451
+    @97  go to state 451
 
 
 state 393
@@ -5406,14 +5407,14 @@ state 393
 
 state 394
 
-  556 initialEndBubble: KW_IN $@122 inEnd .
+  556 initialEndBubble: KW_IN @122 inEnd .
 
     $default  reduce using rule 556 (initialEndBubble)
 
 
 state 395
 
-  492 moduleAndTerm: cTokenBarIn $@96 endBubble .
+  492 moduleAndTerm: cTokenBarIn @96 endBubble .
 
     $default  reduce using rule 492 (moduleAndTerm)
 
@@ -5427,11 +5428,11 @@ state 396
 
 state 397
 
-  551 miscEndBubble: '(' . $@120 endBubble
+  551 miscEndBubble: '(' . @120 endBubble
 
-    $default  reduce using rule 550 ($@120)
+    $default  reduce using rule 550 (@120)
 
-    $@120  go to state 452
+    @120  go to state 452
 
 
 state 398
@@ -5471,11 +5472,11 @@ state 402
 
 state 403
 
-  502 numberModuleTerm1: NUMERIC_ID . $@100 numberModuleTerm2
+  502 numberModuleTerm1: NUMERIC_ID . @100 numberModuleTerm2
 
-    $default  reduce using rule 501 ($@100)
+    $default  reduce using rule 501 (@100)
 
-    $@100  go to state 453
+    @100  go to state 453
 
 
 state 404
@@ -5487,7 +5488,7 @@ state 404
 
 state 405
 
-  497 numberModuleTerm: '[' $@98 numberModuleTerm1 .
+  497 numberModuleTerm: '[' @98 numberModuleTerm1 .
 
     $default  reduce using rule 497 (numberModuleTerm)
 
@@ -5501,27 +5502,27 @@ state 406
 
 state 407
 
-  504 numberModuleTerm1: cTokenBarDotNumber . $@101 endBubble
+  504 numberModuleTerm1: cTokenBarDotNumber . @101 endBubble
 
-    $default  reduce using rule 503 ($@101)
+    $default  reduce using rule 503 (@101)
 
-    $@101  go to state 454
+    @101  go to state 454
 
 
 state 408
 
-  500 numberModuleTerm: cTokenBarLeftIn $@99 endBubble .
+  500 numberModuleTerm: cTokenBarLeftIn @99 endBubble .
 
     $default  reduce using rule 500 (numberModuleTerm)
 
 
 state 409
 
-  434 command: KW_SET KW_OMOD KW_INCLUDE $@93 cSimpleTokenBarDot . $@94 polarity '.'
+  434 command: KW_SET KW_OMOD KW_INCLUDE @93 cSimpleTokenBarDot . @94 polarity '.'
 
-    $default  reduce using rule 433 ($@94)
+    $default  reduce using rule 433 (@94)
 
-    $@94  go to state 455
+    @94  go to state 455
 
 
 state 410
@@ -5645,7 +5646,7 @@ state 426
 
 state 427
 
-  431 command: KW_SET importMode $@91 cSimpleTokenBarDot $@92 . polarity '.'
+  431 command: KW_SET importMode @91 cSimpleTokenBarDot @92 . polarity '.'
 
     KW_ON   shift, and go to state 250
     KW_OFF  shift, and go to state 251
@@ -5772,7 +5773,7 @@ state 433
 
 state 434
 
-   94 module: startModule $@24 token $@25 parameters . expectedIs decList KW_ENDM
+   94 module: startModule @24 token @25 parameters . expectedIs decList KW_ENDM
 
     KW_IS  shift, and go to state 463
 
@@ -5804,11 +5805,11 @@ state 437
 
 state 438
 
-  519 numbersModuleTerm1: ',' . $@107 numbersModuleTerm5
+  519 numbersModuleTerm1: ',' . @107 numbersModuleTerm5
 
-    $default  reduce using rule 518 ($@107)
+    $default  reduce using rule 518 (@107)
 
-    $@107  go to state 465
+    @107  go to state 465
 
 
 state 439
@@ -5827,16 +5828,16 @@ state 440
 
 state 441
 
-  517 numbersModuleTerm1: NUMERIC_ID . $@106 numbersModuleTerm2
+  517 numbersModuleTerm1: NUMERIC_ID . @106 numbersModuleTerm2
 
-    $default  reduce using rule 516 ($@106)
+    $default  reduce using rule 516 (@106)
 
-    $@106  go to state 466
+    @106  go to state 466
 
 
 state 442
 
-  512 numbersModuleTerm: '[' $@104 numbersModuleTerm1 .
+  512 numbersModuleTerm: '[' @104 numbersModuleTerm1 .
 
     $default  reduce using rule 512 (numbersModuleTerm)
 
@@ -5850,16 +5851,16 @@ state 443
 
 state 444
 
-  521 numbersModuleTerm1: cTokenBarDotCommaNumber . $@108 endBubble
+  521 numbersModuleTerm1: cTokenBarDotCommaNumber . @108 endBubble
 
-    $default  reduce using rule 520 ($@108)
+    $default  reduce using rule 520 (@108)
 
-    $@108  go to state 467
+    @108  go to state 467
 
 
 state 445
 
-  515 numbersModuleTerm: cTokenBarLeftIn $@105 endBubble .
+  515 numbersModuleTerm: cTokenBarLeftIn @105 endBubble .
 
     $default  reduce using rule 515 (numbersModuleTerm)
 
@@ -5962,7 +5963,7 @@ state 447
 
 state 448
 
-   71 view: KW_VIEW $@16 token KW_FROM moduleExpr $@17 . KW_TO moduleExpr $@18 expectedIs viewDecList KW_ENDV
+   71 view: KW_VIEW @16 token KW_FROM moduleExpr @17 . KW_TO moduleExpr @18 expectedIs viewDecList KW_ENDV
 
     KW_TO  shift, and go to state 470
 
@@ -5978,16 +5979,16 @@ state 449
 
 state 450
 
-   37 instantExpr: moduleExpr3 '{' . $@6 argList '}'
+   37 instantExpr: moduleExpr3 '{' . @6 argList '}'
 
-    $default  reduce using rule 36 ($@6)
+    $default  reduce using rule 36 (@6)
 
-    $@6  go to state 473
+    @6  go to state 473
 
 
 state 451
 
-  494 inEnd: ':' $@97 . endBubble
+  494 inEnd: ':' @97 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -5997,7 +5998,7 @@ state 451
 
 state 452
 
-  551 miscEndBubble: '(' $@120 . endBubble
+  551 miscEndBubble: '(' @120 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -6007,7 +6008,7 @@ state 452
 
 state 453
 
-  502 numberModuleTerm1: NUMERIC_ID $@100 . numberModuleTerm2
+  502 numberModuleTerm1: NUMERIC_ID @100 . numberModuleTerm2
 
     ':'          shift, and go to state 476
     '('          shift, and go to state 397
@@ -6028,7 +6029,7 @@ state 453
 
 state 454
 
-  504 numberModuleTerm1: cTokenBarDotNumber $@101 . endBubble
+  504 numberModuleTerm1: cTokenBarDotNumber @101 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -6038,7 +6039,7 @@ state 454
 
 state 455
 
-  434 command: KW_SET KW_OMOD KW_INCLUDE $@93 cSimpleTokenBarDot $@94 . polarity '.'
+  434 command: KW_SET KW_OMOD KW_INCLUDE @93 cSimpleTokenBarDot @94 . polarity '.'
 
     KW_ON   shift, and go to state 250
     KW_OFF  shift, and go to state 251
@@ -6069,7 +6070,7 @@ state 458
 
 state 459
 
-  431 command: KW_SET importMode $@91 cSimpleTokenBarDot $@92 polarity . '.'
+  431 command: KW_SET importMode @91 cSimpleTokenBarDot @92 polarity . '.'
 
     '.'  shift, and go to state 488
 
@@ -6109,7 +6110,7 @@ state 463
 
 state 464
 
-   94 module: startModule $@24 token $@25 parameters expectedIs . decList KW_ENDM
+   94 module: startModule @24 token @25 parameters expectedIs . decList KW_ENDM
 
     $default  reduce using rule 110 (decList)
 
@@ -6118,7 +6119,7 @@ state 464
 
 state 465
 
-  519 numbersModuleTerm1: ',' $@107 . numbersModuleTerm5
+  519 numbersModuleTerm1: ',' @107 . numbersModuleTerm5
 
     ':'          shift, and go to state 396
     '('          shift, and go to state 397
@@ -6139,7 +6140,7 @@ state 465
 
 state 466
 
-  517 numbersModuleTerm1: NUMERIC_ID $@106 . numbersModuleTerm2
+  517 numbersModuleTerm1: NUMERIC_ID @106 . numbersModuleTerm2
 
     ':'          shift, and go to state 499
     '('          shift, and go to state 397
@@ -6160,7 +6161,7 @@ state 466
 
 state 467
 
-  521 numbersModuleTerm1: cTokenBarDotCommaNumber $@108 . endBubble
+  521 numbersModuleTerm1: cTokenBarDotCommaNumber @108 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -6185,7 +6186,7 @@ state 469
 
 state 470
 
-   71 view: KW_VIEW $@16 token KW_FROM moduleExpr $@17 KW_TO . moduleExpr $@18 expectedIs viewDecList KW_ENDV
+   71 view: KW_VIEW @16 token KW_FROM moduleExpr @17 KW_TO . moduleExpr @18 expectedIs viewDecList KW_ENDV
 
     KW_ENDM       shift, and go to state 122
     KW_IMPORT     shift, and go to state 123
@@ -6272,11 +6273,11 @@ state 470
 
 state 471
 
-   43 renaming: '(' . $@7 renaming2 $@8 ')'
+   43 renaming: '(' . @7 renaming2 @8 ')'
 
-    $default  reduce using rule 41 ($@7)
+    $default  reduce using rule 41 (@7)
 
-    $@7  go to state 511
+    @7  go to state 511
 
 
 state 472
@@ -6288,7 +6289,7 @@ state 472
 
 state 473
 
-   37 instantExpr: moduleExpr3 '{' $@6 . argList '}'
+   37 instantExpr: moduleExpr3 '{' @6 . argList '}'
 
     KW_ENDM       shift, and go to state 122
     KW_IMPORT     shift, and go to state 123
@@ -6369,14 +6370,14 @@ state 473
 
 state 474
 
-  494 inEnd: ':' $@97 endBubble .
+  494 inEnd: ':' @97 endBubble .
 
     $default  reduce using rule 494 (inEnd)
 
 
 state 475
 
-  551 miscEndBubble: '(' $@120 endBubble .
+  551 miscEndBubble: '(' @120 endBubble .
 
     $default  reduce using rule 551 (miscEndBubble)
 
@@ -6397,11 +6398,11 @@ state 477
 
 state 478
 
-  507 numberModuleTerm2: ']' . $@102 moduleAndTerm
+  507 numberModuleTerm2: ']' . @102 moduleAndTerm
 
-    $default  reduce using rule 506 ($@102)
+    $default  reduce using rule 506 (@102)
 
-    $@102  go to state 514
+    @102  go to state 514
 
 
 state 479
@@ -6434,7 +6435,7 @@ state 482
 
 state 483
 
-  502 numberModuleTerm1: NUMERIC_ID $@100 numberModuleTerm2 .
+  502 numberModuleTerm1: NUMERIC_ID @100 numberModuleTerm2 .
 
     $default  reduce using rule 502 (numberModuleTerm1)
 
@@ -6448,30 +6449,30 @@ state 484
 
 state 485
 
-  509 numberModuleTerm2: cTokenBarDotRight . $@103 endBubble
+  509 numberModuleTerm2: cTokenBarDotRight . @103 endBubble
 
-    $default  reduce using rule 508 ($@103)
+    $default  reduce using rule 508 (@103)
 
-    $@103  go to state 515
+    @103  go to state 515
 
 
 state 486
 
-  504 numberModuleTerm1: cTokenBarDotNumber $@101 endBubble .
+  504 numberModuleTerm1: cTokenBarDotNumber @101 endBubble .
 
     $default  reduce using rule 504 (numberModuleTerm1)
 
 
 state 487
 
-  434 command: KW_SET KW_OMOD KW_INCLUDE $@93 cSimpleTokenBarDot $@94 polarity . '.'
+  434 command: KW_SET KW_OMOD KW_INCLUDE @93 cSimpleTokenBarDot @94 polarity . '.'
 
     '.'  shift, and go to state 516
 
 
 state 488
 
-  431 command: KW_SET importMode $@91 cSimpleTokenBarDot $@92 polarity '.' .
+  431 command: KW_SET importMode @91 cSimpleTokenBarDot @92 polarity '.' .
 
     $default  reduce using rule 431 (command)
 
@@ -6667,7 +6668,7 @@ state 493
 
 state 494
 
-   94 module: startModule $@24 token $@25 parameters expectedIs decList . KW_ENDM
+   94 module: startModule @24 token @25 parameters expectedIs decList . KW_ENDM
   109 decList: decList . declaration
 
     error        shift, and go to state 519
@@ -6694,16 +6695,16 @@ state 494
 
 state 495
 
-  541 numbersModuleTerm5: NUMERIC_ID . $@116 numbersModuleTerm6
+  541 numbersModuleTerm5: NUMERIC_ID . @116 numbersModuleTerm6
 
-    $default  reduce using rule 540 ($@116)
+    $default  reduce using rule 540 (@116)
 
-    $@116  go to state 538
+    @116  go to state 538
 
 
 state 496
 
-  519 numbersModuleTerm1: ',' $@107 numbersModuleTerm5 .
+  519 numbersModuleTerm1: ',' @107 numbersModuleTerm5 .
 
     $default  reduce using rule 519 (numbersModuleTerm1)
 
@@ -6717,11 +6718,11 @@ state 497
 
 state 498
 
-  543 numbersModuleTerm5: cTokenBarDotNumber . $@117 endBubble
+  543 numbersModuleTerm5: cTokenBarDotNumber . @117 endBubble
 
-    $default  reduce using rule 542 ($@117)
+    $default  reduce using rule 542 (@117)
 
-    $@117  go to state 539
+    @117  go to state 539
 
 
 state 499
@@ -6740,20 +6741,20 @@ state 500
 
 state 501
 
-  524 numbersModuleTerm2: ']' . $@109 moduleAndTerm
+  524 numbersModuleTerm2: ']' . @109 moduleAndTerm
 
-    $default  reduce using rule 523 ($@109)
+    $default  reduce using rule 523 (@109)
 
-    $@109  go to state 540
+    @109  go to state 540
 
 
 state 502
 
-  526 numbersModuleTerm2: ',' . $@110 numbersModuleTerm3
+  526 numbersModuleTerm2: ',' . @110 numbersModuleTerm3
 
-    $default  reduce using rule 525 ($@110)
+    $default  reduce using rule 525 (@110)
 
-    $@110  go to state 541
+    @110  go to state 541
 
 
 state 503
@@ -6779,7 +6780,7 @@ state 505
 
 state 506
 
-  517 numbersModuleTerm1: NUMERIC_ID $@106 numbersModuleTerm2 .
+  517 numbersModuleTerm1: NUMERIC_ID @106 numbersModuleTerm2 .
 
     $default  reduce using rule 517 (numbersModuleTerm1)
 
@@ -6793,16 +6794,16 @@ state 507
 
 state 508
 
-  528 numbersModuleTerm2: cTokenBarDotCommaRight . $@111 endBubble
+  528 numbersModuleTerm2: cTokenBarDotCommaRight . @111 endBubble
 
-    $default  reduce using rule 527 ($@111)
+    $default  reduce using rule 527 (@111)
 
-    $@111  go to state 542
+    @111  go to state 542
 
 
 state 509
 
-  521 numbersModuleTerm1: cTokenBarDotCommaNumber $@108 endBubble .
+  521 numbersModuleTerm1: cTokenBarDotCommaNumber @108 endBubble .
 
     $default  reduce using rule 521 (numbersModuleTerm1)
 
@@ -6810,18 +6811,18 @@ state 509
 state 510
 
    29 moduleExpr: moduleExpr . '+' moduleExpr
-   71 view: KW_VIEW $@16 token KW_FROM moduleExpr $@17 KW_TO moduleExpr . $@18 expectedIs viewDecList KW_ENDV
+   71 view: KW_VIEW @16 token KW_FROM moduleExpr @17 KW_TO moduleExpr . @18 expectedIs viewDecList KW_ENDV
 
     '+'  shift, and go to state 447
 
-    $default  reduce using rule 70 ($@18)
+    $default  reduce using rule 70 (@18)
 
-    $@18  go to state 543
+    @18  go to state 543
 
 
 state 511
 
-   43 renaming: '(' $@7 . renaming2 $@8 ')'
+   43 renaming: '(' @7 . renaming2 @8 ')'
 
     error     shift, and go to state 544
     KW_SORT   shift, and go to state 545
@@ -6835,7 +6836,7 @@ state 511
 
 state 512
 
-   37 instantExpr: moduleExpr3 '{' $@6 argList . '}'
+   37 instantExpr: moduleExpr3 '{' @6 argList . '}'
    39 argList: argList . ',' token
 
     ','  shift, and go to state 551
@@ -6851,7 +6852,7 @@ state 513
 
 state 514
 
-  507 numberModuleTerm2: ']' $@102 . moduleAndTerm
+  507 numberModuleTerm2: ']' @102 . moduleAndTerm
 
     ':'          shift, and go to state 195
     '('          shift, and go to state 196
@@ -6871,7 +6872,7 @@ state 514
 
 state 515
 
-  509 numberModuleTerm2: cTokenBarDotRight $@103 . endBubble
+  509 numberModuleTerm2: cTokenBarDotRight @103 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -6881,7 +6882,7 @@ state 515
 
 state 516
 
-  434 command: KW_SET KW_OMOD KW_INCLUDE $@93 cSimpleTokenBarDot $@94 polarity '.' .
+  434 command: KW_SET KW_OMOD KW_INCLUDE @93 cSimpleTokenBarDot @94 polarity '.' .
 
     $default  reduce using rule 434 (command)
 
@@ -6912,7 +6913,7 @@ state 519
 
 state 520
 
-   94 module: startModule $@24 token $@25 parameters expectedIs decList KW_ENDM .
+   94 module: startModule @24 token @25 parameters expectedIs decList KW_ENDM .
 
     $default  reduce using rule 94 (module)
 
@@ -7009,29 +7010,29 @@ state 521
 
 state 522
 
-  113 declaration: KW_SORT . $@26 sortNameList dot
+  113 declaration: KW_SORT . @26 sortNameList dot
 
-    $default  reduce using rule 112 ($@26)
+    $default  reduce using rule 112 (@26)
 
-    $@26  go to state 571
+    @26  go to state 571
 
 
 state 523
 
-  115 declaration: KW_SUBSORT . $@27 subsortList dot
+  115 declaration: KW_SUBSORT . @27 subsortList dot
 
-    $default  reduce using rule 114 ($@27)
+    $default  reduce using rule 114 (@27)
 
-    $@27  go to state 572
+    @27  go to state 572
 
 
 state 524
 
-  118 declaration: KW_OP . $@28 ':' $@29 domainRangeAttr
+  118 declaration: KW_OP . @28 ':' @29 domainRangeAttr
 
-    $default  reduce using rule 116 ($@28)
+    $default  reduce using rule 116 (@28)
 
-    $@28  go to state 573
+    @28  go to state 573
 
 
 state 525
@@ -7279,7 +7280,7 @@ state 527
 
 state 528
 
-  147 declaration: KW_CLASS . token $@47 classDef '.'
+  147 declaration: KW_CLASS . token @47 classDef '.'
 
     KW_ENDM       shift, and go to state 122
     KW_IMPORT     shift, and go to state 123
@@ -7359,74 +7360,74 @@ state 528
 
 state 529
 
-  149 declaration: KW_SUBCLASS . $@48 subsortList dot
+  149 declaration: KW_SUBCLASS . @48 subsortList dot
 
-    $default  reduce using rule 148 ($@48)
+    $default  reduce using rule 148 (@48)
 
-    $@48  go to state 592
+    @48  go to state 592
 
 
 state 530
 
-  123 declaration: KW_MB . $@30 ':' $@31 endBubble
+  123 declaration: KW_MB . @30 ':' @31 endBubble
 
-    $default  reduce using rule 121 ($@30)
+    $default  reduce using rule 121 (@30)
 
-    $@30  go to state 593
+    @30  go to state 593
 
 
 state 531
 
-  127 declaration: KW_CMB . $@32 ':' $@33 KW_IF $@34 endBubble
+  127 declaration: KW_CMB . @32 ':' @33 KW_IF @34 endBubble
 
-    $default  reduce using rule 124 ($@32)
+    $default  reduce using rule 124 (@32)
 
-    $@32  go to state 594
+    @32  go to state 594
 
 
 state 532
 
-  130 declaration: KW_EQ . $@35 '=' $@36 endBubble
+  130 declaration: KW_EQ . @35 '=' @36 endBubble
 
-    $default  reduce using rule 128 ($@35)
+    $default  reduce using rule 128 (@35)
 
-    $@35  go to state 595
+    @35  go to state 595
 
 
 state 533
 
-  134 declaration: KW_CEQ . $@37 '=' $@38 KW_IF $@39 endBubble
+  134 declaration: KW_CEQ . @37 '=' @38 KW_IF @39 endBubble
 
-    $default  reduce using rule 131 ($@37)
+    $default  reduce using rule 131 (@37)
 
-    $@37  go to state 596
+    @37  go to state 596
 
 
 state 534
 
-  137 declaration: KW_RL . $@40 KW_ARROW2 $@41 endBubble
+  137 declaration: KW_RL . @40 KW_ARROW2 @41 endBubble
 
-    $default  reduce using rule 135 ($@40)
+    $default  reduce using rule 135 (@40)
 
-    $@40  go to state 597
+    @40  go to state 597
 
 
 state 535
 
-  141 declaration: KW_CRL . $@42 KW_ARROW2 $@43 KW_IF $@44 endBubble
+  141 declaration: KW_CRL . @42 KW_ARROW2 @43 KW_IF @44 endBubble
 
-    $default  reduce using rule 138 ($@42)
+    $default  reduce using rule 138 (@42)
 
-    $@42  go to state 598
+    @42  go to state 598
 
 
 state 536
 
-  144 declaration: KW_MSG . $@45 ':' $@46 domainRangeAttr
+  144 declaration: KW_MSG . @45 ':' @46 domainRangeAttr
 
-    $default  reduce using rule 142 ($@45)
+    $default  reduce using rule 142 (@45)
 
-    $@45  go to state 599
+    @45  go to state 599
 
 
 state 537
@@ -7438,7 +7439,7 @@ state 537
 
 state 538
 
-  541 numbersModuleTerm5: NUMERIC_ID $@116 . numbersModuleTerm6
+  541 numbersModuleTerm5: NUMERIC_ID @116 . numbersModuleTerm6
 
     ':'          shift, and go to state 476
     '('          shift, and go to state 397
@@ -7459,7 +7460,7 @@ state 538
 
 state 539
 
-  543 numbersModuleTerm5: cTokenBarDotNumber $@117 . endBubble
+  543 numbersModuleTerm5: cTokenBarDotNumber @117 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -7469,7 +7470,7 @@ state 539
 
 state 540
 
-  524 numbersModuleTerm2: ']' $@109 . moduleAndTerm
+  524 numbersModuleTerm2: ']' @109 . moduleAndTerm
 
     ':'          shift, and go to state 195
     '('          shift, and go to state 196
@@ -7489,7 +7490,7 @@ state 540
 
 state 541
 
-  526 numbersModuleTerm2: ',' $@110 . numbersModuleTerm3
+  526 numbersModuleTerm2: ',' @110 . numbersModuleTerm3
 
     ':'          shift, and go to state 396
     '('          shift, and go to state 397
@@ -7510,7 +7511,7 @@ state 541
 
 state 542
 
-  528 numbersModuleTerm2: cTokenBarDotCommaRight $@111 . endBubble
+  528 numbersModuleTerm2: cTokenBarDotCommaRight @111 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -7520,7 +7521,7 @@ state 542
 
 state 543
 
-   71 view: KW_VIEW $@16 token KW_FROM moduleExpr $@17 KW_TO moduleExpr $@18 . expectedIs viewDecList KW_ENDV
+   71 view: KW_VIEW @16 token KW_FROM moduleExpr @17 KW_TO moduleExpr @18 . expectedIs viewDecList KW_ENDV
 
     KW_IS  shift, and go to state 463
 
@@ -7603,11 +7604,11 @@ state 545
 
 state 546
 
-   52 mapping: KW_OP . $@9 fromSpec KW_TO $@10 toAttributes
+   52 mapping: KW_OP . @9 fromSpec KW_TO @10 toAttributes
 
-    $default  reduce using rule 50 ($@9)
+    $default  reduce using rule 50 (@9)
 
-    $@9  go to state 627
+    @9  go to state 627
 
 
 state 547
@@ -7692,11 +7693,11 @@ state 547
 
 state 548
 
-   43 renaming: '(' $@7 renaming2 . $@8 ')'
+   43 renaming: '(' @7 renaming2 . @8 ')'
 
-    $default  reduce using rule 42 ($@8)
+    $default  reduce using rule 42 (@8)
 
-    $@8  go to state 629
+    @8  go to state 629
 
 
 state 549
@@ -7798,21 +7799,21 @@ state 551
 
 state 552
 
-   37 instantExpr: moduleExpr3 '{' $@6 argList '}' .
+   37 instantExpr: moduleExpr3 '{' @6 argList '}' .
 
     $default  reduce using rule 37 (instantExpr)
 
 
 state 553
 
-  507 numberModuleTerm2: ']' $@102 moduleAndTerm .
+  507 numberModuleTerm2: ']' @102 moduleAndTerm .
 
     $default  reduce using rule 507 (numberModuleTerm2)
 
 
 state 554
 
-  509 numberModuleTerm2: cTokenBarDotRight $@103 endBubble .
+  509 numberModuleTerm2: cTokenBarDotRight @103 endBubble .
 
     $default  reduce using rule 509 (numberModuleTerm2)
 
@@ -7991,7 +7992,7 @@ state 570
 
 state 571
 
-  113 declaration: KW_SORT $@26 . sortNameList dot
+  113 declaration: KW_SORT @26 . sortNameList dot
 
     $default  reduce using rule 232 (sortNameList)
 
@@ -8000,7 +8001,7 @@ state 571
 
 state 572
 
-  115 declaration: KW_SUBSORT $@27 . subsortList dot
+  115 declaration: KW_SUBSORT @27 . subsortList dot
 
     KW_ENDM       shift, and go to state 122
     KW_IMPORT     shift, and go to state 123
@@ -8066,7 +8067,7 @@ state 572
 
 state 573
 
-  118 declaration: KW_OP $@28 . ':' $@29 domainRangeAttr
+  118 declaration: KW_OP @28 . ':' @29 domainRangeAttr
 
     ':'  shift, and go to state 642
 
@@ -8417,16 +8418,16 @@ state 590
 
 state 591
 
-  147 declaration: KW_CLASS token . $@47 classDef '.'
+  147 declaration: KW_CLASS token . @47 classDef '.'
 
-    $default  reduce using rule 146 ($@47)
+    $default  reduce using rule 146 (@47)
 
-    $@47  go to state 648
+    @47  go to state 648
 
 
 state 592
 
-  149 declaration: KW_SUBCLASS $@48 . subsortList dot
+  149 declaration: KW_SUBCLASS @48 . subsortList dot
 
     KW_ENDM       shift, and go to state 122
     KW_IMPORT     shift, and go to state 123
@@ -8492,65 +8493,65 @@ state 592
 
 state 593
 
-  123 declaration: KW_MB $@30 . ':' $@31 endBubble
+  123 declaration: KW_MB @30 . ':' @31 endBubble
 
     ':'  shift, and go to state 650
 
 
 state 594
 
-  127 declaration: KW_CMB $@32 . ':' $@33 KW_IF $@34 endBubble
+  127 declaration: KW_CMB @32 . ':' @33 KW_IF @34 endBubble
 
     ':'  shift, and go to state 651
 
 
 state 595
 
-  130 declaration: KW_EQ $@35 . '=' $@36 endBubble
+  130 declaration: KW_EQ @35 . '=' @36 endBubble
 
     '='  shift, and go to state 652
 
 
 state 596
 
-  134 declaration: KW_CEQ $@37 . '=' $@38 KW_IF $@39 endBubble
+  134 declaration: KW_CEQ @37 . '=' @38 KW_IF @39 endBubble
 
     '='  shift, and go to state 653
 
 
 state 597
 
-  137 declaration: KW_RL $@40 . KW_ARROW2 $@41 endBubble
+  137 declaration: KW_RL @40 . KW_ARROW2 @41 endBubble
 
     KW_ARROW2  shift, and go to state 654
 
 
 state 598
 
-  141 declaration: KW_CRL $@42 . KW_ARROW2 $@43 KW_IF $@44 endBubble
+  141 declaration: KW_CRL @42 . KW_ARROW2 @43 KW_IF @44 endBubble
 
     KW_ARROW2  shift, and go to state 655
 
 
 state 599
 
-  144 declaration: KW_MSG $@45 . ':' $@46 domainRangeAttr
+  144 declaration: KW_MSG @45 . ':' @46 domainRangeAttr
 
     ':'  shift, and go to state 656
 
 
 state 600
 
-  546 numbersModuleTerm6: ']' . $@118 moduleAndTerm
+  546 numbersModuleTerm6: ']' . @118 moduleAndTerm
 
-    $default  reduce using rule 545 ($@118)
+    $default  reduce using rule 545 (@118)
 
-    $@118  go to state 657
+    @118  go to state 657
 
 
 state 601
 
-  541 numbersModuleTerm5: NUMERIC_ID $@116 numbersModuleTerm6 .
+  541 numbersModuleTerm5: NUMERIC_ID @116 numbersModuleTerm6 .
 
     $default  reduce using rule 541 (numbersModuleTerm5)
 
@@ -8564,39 +8565,39 @@ state 602
 
 state 603
 
-  548 numbersModuleTerm6: cTokenBarDotRight . $@119 endBubble
+  548 numbersModuleTerm6: cTokenBarDotRight . @119 endBubble
 
-    $default  reduce using rule 547 ($@119)
+    $default  reduce using rule 547 (@119)
 
-    $@119  go to state 658
+    @119  go to state 658
 
 
 state 604
 
-  543 numbersModuleTerm5: cTokenBarDotNumber $@117 endBubble .
+  543 numbersModuleTerm5: cTokenBarDotNumber @117 endBubble .
 
     $default  reduce using rule 543 (numbersModuleTerm5)
 
 
 state 605
 
-  524 numbersModuleTerm2: ']' $@109 moduleAndTerm .
+  524 numbersModuleTerm2: ']' @109 moduleAndTerm .
 
     $default  reduce using rule 524 (numbersModuleTerm2)
 
 
 state 606
 
-  531 numbersModuleTerm3: NUMERIC_ID . $@112 numbersModuleTerm4
+  531 numbersModuleTerm3: NUMERIC_ID . @112 numbersModuleTerm4
 
-    $default  reduce using rule 530 ($@112)
+    $default  reduce using rule 530 (@112)
 
-    $@112  go to state 659
+    @112  go to state 659
 
 
 state 607
 
-  526 numbersModuleTerm2: ',' $@110 numbersModuleTerm3 .
+  526 numbersModuleTerm2: ',' @110 numbersModuleTerm3 .
 
     $default  reduce using rule 526 (numbersModuleTerm2)
 
@@ -8610,23 +8611,23 @@ state 608
 
 state 609
 
-  533 numbersModuleTerm3: cTokenBarDotNumber . $@113 endBubble
+  533 numbersModuleTerm3: cTokenBarDotNumber . @113 endBubble
 
-    $default  reduce using rule 532 ($@113)
+    $default  reduce using rule 532 (@113)
 
-    $@113  go to state 660
+    @113  go to state 660
 
 
 state 610
 
-  528 numbersModuleTerm2: cTokenBarDotCommaRight $@111 endBubble .
+  528 numbersModuleTerm2: cTokenBarDotCommaRight @111 endBubble .
 
     $default  reduce using rule 528 (numbersModuleTerm2)
 
 
 state 611
 
-   71 view: KW_VIEW $@16 token KW_FROM moduleExpr $@17 KW_TO moduleExpr $@18 expectedIs . viewDecList KW_ENDV
+   71 view: KW_VIEW @16 token KW_FROM moduleExpr @17 KW_TO moduleExpr @18 expectedIs . viewDecList KW_ENDV
 
     $default  reduce using rule 73 (viewDecList)
 
@@ -8713,7 +8714,7 @@ state 622
 state 623
 
   237 sortName: sortNameFrag .
-  240 sortNameFrag: sortNameFrag . '{' $@58 sortNameFrags '}'
+  240 sortNameFrag: sortNameFrag . '{' @58 sortNameFrags '}'
 
     '{'  shift, and go to state 663
 
@@ -8743,7 +8744,7 @@ state 626
 
 state 627
 
-   52 mapping: KW_OP $@9 . fromSpec KW_TO $@10 toAttributes
+   52 mapping: KW_OP @9 . fromSpec KW_TO @10 toAttributes
 
     ':'  shift, and go to state 664
 
@@ -8761,7 +8762,7 @@ state 628
 
 state 629
 
-   43 renaming: '(' $@7 renaming2 $@8 . ')'
+   43 renaming: '(' @7 renaming2 @8 . ')'
 
     ')'  shift, and go to state 667
 
@@ -8919,7 +8920,7 @@ state 638
 
 state 639
 
-  113 declaration: KW_SORT $@26 sortNameList . dot
+  113 declaration: KW_SORT @26 sortNameList . dot
   231 sortNameList: sortNameList . sortName
 
     KW_ENDM       shift, and go to state 122
@@ -8988,7 +8989,7 @@ state 639
 
 state 640
 
-  115 declaration: KW_SUBSORT $@27 subsortList . dot
+  115 declaration: KW_SUBSORT @27 subsortList . dot
   233 subsortList: subsortList . sortName
   234            | subsortList . '<'
 
@@ -9059,20 +9060,20 @@ state 640
 
 state 641
 
-  236 subsortList: sortName . $@57 sortNameList '<'
+  236 subsortList: sortName . @57 sortNameList '<'
 
-    $default  reduce using rule 235 ($@57)
+    $default  reduce using rule 235 (@57)
 
-    $@57  go to state 678
+    @57  go to state 678
 
 
 state 642
 
-  118 declaration: KW_OP $@28 ':' . $@29 domainRangeAttr
+  118 declaration: KW_OP @28 ':' . @29 domainRangeAttr
 
-    $default  reduce using rule 117 ($@29)
+    $default  reduce using rule 117 (@29)
 
-    $@29  go to state 679
+    @29  go to state 679
 
 
 state 643
@@ -9250,7 +9251,7 @@ state 647
 
 state 648
 
-  147 declaration: KW_CLASS token $@47 . classDef '.'
+  147 declaration: KW_CLASS token @47 . classDef '.'
 
     '|'  shift, and go to state 693
 
@@ -9259,7 +9260,7 @@ state 648
 
 state 649
 
-  149 declaration: KW_SUBCLASS $@48 subsortList . dot
+  149 declaration: KW_SUBCLASS @48 subsortList . dot
   233 subsortList: subsortList . sortName
   234            | subsortList . '<'
 
@@ -9330,70 +9331,70 @@ state 649
 
 state 650
 
-  123 declaration: KW_MB $@30 ':' . $@31 endBubble
+  123 declaration: KW_MB @30 ':' . @31 endBubble
 
-    $default  reduce using rule 122 ($@31)
+    $default  reduce using rule 122 (@31)
 
-    $@31  go to state 696
+    @31  go to state 696
 
 
 state 651
 
-  127 declaration: KW_CMB $@32 ':' . $@33 KW_IF $@34 endBubble
+  127 declaration: KW_CMB @32 ':' . @33 KW_IF @34 endBubble
 
-    $default  reduce using rule 125 ($@33)
+    $default  reduce using rule 125 (@33)
 
-    $@33  go to state 697
+    @33  go to state 697
 
 
 state 652
 
-  130 declaration: KW_EQ $@35 '=' . $@36 endBubble
+  130 declaration: KW_EQ @35 '=' . @36 endBubble
 
-    $default  reduce using rule 129 ($@36)
+    $default  reduce using rule 129 (@36)
 
-    $@36  go to state 698
+    @36  go to state 698
 
 
 state 653
 
-  134 declaration: KW_CEQ $@37 '=' . $@38 KW_IF $@39 endBubble
+  134 declaration: KW_CEQ @37 '=' . @38 KW_IF @39 endBubble
 
-    $default  reduce using rule 132 ($@38)
+    $default  reduce using rule 132 (@38)
 
-    $@38  go to state 699
+    @38  go to state 699
 
 
 state 654
 
-  137 declaration: KW_RL $@40 KW_ARROW2 . $@41 endBubble
+  137 declaration: KW_RL @40 KW_ARROW2 . @41 endBubble
 
-    $default  reduce using rule 136 ($@41)
+    $default  reduce using rule 136 (@41)
 
-    $@41  go to state 700
+    @41  go to state 700
 
 
 state 655
 
-  141 declaration: KW_CRL $@42 KW_ARROW2 . $@43 KW_IF $@44 endBubble
+  141 declaration: KW_CRL @42 KW_ARROW2 . @43 KW_IF @44 endBubble
 
-    $default  reduce using rule 139 ($@43)
+    $default  reduce using rule 139 (@43)
 
-    $@43  go to state 701
+    @43  go to state 701
 
 
 state 656
 
-  144 declaration: KW_MSG $@45 ':' . $@46 domainRangeAttr
+  144 declaration: KW_MSG @45 ':' . @46 domainRangeAttr
 
-    $default  reduce using rule 143 ($@46)
+    $default  reduce using rule 143 (@46)
 
-    $@46  go to state 702
+    @46  go to state 702
 
 
 state 657
 
-  546 numbersModuleTerm6: ']' $@118 . moduleAndTerm
+  546 numbersModuleTerm6: ']' @118 . moduleAndTerm
 
     ':'          shift, and go to state 195
     '('          shift, and go to state 196
@@ -9413,7 +9414,7 @@ state 657
 
 state 658
 
-  548 numbersModuleTerm6: cTokenBarDotRight $@119 . endBubble
+  548 numbersModuleTerm6: cTokenBarDotRight @119 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -9423,7 +9424,7 @@ state 658
 
 state 659
 
-  531 numbersModuleTerm3: NUMERIC_ID $@112 . numbersModuleTerm4
+  531 numbersModuleTerm3: NUMERIC_ID @112 . numbersModuleTerm4
 
     ':'          shift, and go to state 476
     '('          shift, and go to state 397
@@ -9444,7 +9445,7 @@ state 659
 
 state 660
 
-  533 numbersModuleTerm3: cTokenBarDotNumber $@113 . endBubble
+  533 numbersModuleTerm3: cTokenBarDotNumber @113 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -9454,7 +9455,7 @@ state 660
 
 state 661
 
-   71 view: KW_VIEW $@16 token KW_FROM moduleExpr $@17 KW_TO moduleExpr $@18 expectedIs viewDecList . KW_ENDV
+   71 view: KW_VIEW @16 token KW_FROM moduleExpr @17 KW_TO moduleExpr @18 expectedIs viewDecList . KW_ENDV
    72 viewDecList: viewDecList . viewDeclaration
 
     error    shift, and go to state 710
@@ -9533,25 +9534,25 @@ state 662
 
 state 663
 
-  240 sortNameFrag: sortNameFrag '{' . $@58 sortNameFrags '}'
+  240 sortNameFrag: sortNameFrag '{' . @58 sortNameFrags '}'
 
-    $default  reduce using rule 239 ($@58)
+    $default  reduce using rule 239 (@58)
 
-    $@58  go to state 717
+    @58  go to state 717
 
 
 state 664
 
-   54 fromSpec: ':' . $@11 typeList arrow typeName
+   54 fromSpec: ':' . @11 typeList arrow typeName
 
-    $default  reduce using rule 53 ($@11)
+    $default  reduce using rule 53 (@11)
 
-    $@11  go to state 718
+    @11  go to state 718
 
 
 state 665
 
-   52 mapping: KW_OP $@9 fromSpec . KW_TO $@10 toAttributes
+   52 mapping: KW_OP @9 fromSpec . KW_TO @10 toAttributes
 
     KW_TO  shift, and go to state 719
 
@@ -9638,7 +9639,7 @@ state 666
 
 state 667
 
-   43 renaming: '(' $@7 renaming2 $@8 ')' .
+   43 renaming: '(' @7 renaming2 @8 ')' .
 
     $default  reduce using rule 43 (renaming)
 
@@ -9682,7 +9683,7 @@ state 672
 
 state 673
 
-  113 declaration: KW_SORT $@26 sortNameList dot .
+  113 declaration: KW_SORT @26 sortNameList dot .
 
     $default  reduce using rule 113 (declaration)
 
@@ -9703,7 +9704,7 @@ state 675
 
 state 676
 
-  115 declaration: KW_SUBSORT $@27 subsortList dot .
+  115 declaration: KW_SUBSORT @27 subsortList dot .
 
     $default  reduce using rule 115 (declaration)
 
@@ -9717,7 +9718,7 @@ state 677
 
 state 678
 
-  236 subsortList: sortName $@57 . sortNameList '<'
+  236 subsortList: sortName @57 . sortNameList '<'
 
     $default  reduce using rule 232 (sortNameList)
 
@@ -9726,7 +9727,7 @@ state 678
 
 state 679
 
-  118 declaration: KW_OP $@28 ':' $@29 . domainRangeAttr
+  118 declaration: KW_OP @28 ':' @29 . domainRangeAttr
 
     KW_ENDM       shift, and go to state 122
     KW_IMPORT     shift, and go to state 123
@@ -9814,11 +9815,11 @@ state 681
 
 state 682
 
-  179 typeName: '[' . $@49 sortNames ']'
+  179 typeName: '[' . @49 sortNames ']'
 
-    $default  reduce using rule 178 ($@49)
+    $default  reduce using rule 178 (@49)
 
-    $@49  go to state 723
+    @49  go to state 723
 
 
 state 683
@@ -10103,21 +10104,21 @@ state 693
 
 state 694
 
-  147 declaration: KW_CLASS token $@47 classDef . '.'
+  147 declaration: KW_CLASS token @47 classDef . '.'
 
     '.'  shift, and go to state 740
 
 
 state 695
 
-  149 declaration: KW_SUBCLASS $@48 subsortList dot .
+  149 declaration: KW_SUBCLASS @48 subsortList dot .
 
     $default  reduce using rule 149 (declaration)
 
 
 state 696
 
-  123 declaration: KW_MB $@30 ':' $@31 . endBubble
+  123 declaration: KW_MB @30 ':' @31 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -10127,14 +10128,14 @@ state 696
 
 state 697
 
-  127 declaration: KW_CMB $@32 ':' $@33 . KW_IF $@34 endBubble
+  127 declaration: KW_CMB @32 ':' @33 . KW_IF @34 endBubble
 
     KW_IF  shift, and go to state 742
 
 
 state 698
 
-  130 declaration: KW_EQ $@35 '=' $@36 . endBubble
+  130 declaration: KW_EQ @35 '=' @36 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -10144,14 +10145,14 @@ state 698
 
 state 699
 
-  134 declaration: KW_CEQ $@37 '=' $@38 . KW_IF $@39 endBubble
+  134 declaration: KW_CEQ @37 '=' @38 . KW_IF @39 endBubble
 
     KW_IF  shift, and go to state 744
 
 
 state 700
 
-  137 declaration: KW_RL $@40 KW_ARROW2 $@41 . endBubble
+  137 declaration: KW_RL @40 KW_ARROW2 @41 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -10161,14 +10162,14 @@ state 700
 
 state 701
 
-  141 declaration: KW_CRL $@42 KW_ARROW2 $@43 . KW_IF $@44 endBubble
+  141 declaration: KW_CRL @42 KW_ARROW2 @43 . KW_IF @44 endBubble
 
     KW_IF  shift, and go to state 746
 
 
 state 702
 
-  144 declaration: KW_MSG $@45 ':' $@46 . domainRangeAttr
+  144 declaration: KW_MSG @45 ':' @46 . domainRangeAttr
 
     KW_ENDM       shift, and go to state 122
     KW_IMPORT     shift, and go to state 123
@@ -10242,30 +10243,30 @@ state 702
 
 state 703
 
-  546 numbersModuleTerm6: ']' $@118 moduleAndTerm .
+  546 numbersModuleTerm6: ']' @118 moduleAndTerm .
 
     $default  reduce using rule 546 (numbersModuleTerm6)
 
 
 state 704
 
-  548 numbersModuleTerm6: cTokenBarDotRight $@119 endBubble .
+  548 numbersModuleTerm6: cTokenBarDotRight @119 endBubble .
 
     $default  reduce using rule 548 (numbersModuleTerm6)
 
 
 state 705
 
-  536 numbersModuleTerm4: ']' . $@114 moduleAndTerm
+  536 numbersModuleTerm4: ']' . @114 moduleAndTerm
 
-    $default  reduce using rule 535 ($@114)
+    $default  reduce using rule 535 (@114)
 
-    $@114  go to state 748
+    @114  go to state 748
 
 
 state 706
 
-  531 numbersModuleTerm3: NUMERIC_ID $@112 numbersModuleTerm4 .
+  531 numbersModuleTerm3: NUMERIC_ID @112 numbersModuleTerm4 .
 
     $default  reduce using rule 531 (numbersModuleTerm3)
 
@@ -10279,16 +10280,16 @@ state 707
 
 state 708
 
-  538 numbersModuleTerm4: cTokenBarDotRight . $@115 endBubble
+  538 numbersModuleTerm4: cTokenBarDotRight . @115 endBubble
 
-    $default  reduce using rule 537 ($@115)
+    $default  reduce using rule 537 (@115)
 
-    $@115  go to state 749
+    @115  go to state 749
 
 
 state 709
 
-  533 numbersModuleTerm3: cTokenBarDotNumber $@113 endBubble .
+  533 numbersModuleTerm3: cTokenBarDotNumber @113 endBubble .
 
     $default  reduce using rule 533 (numbersModuleTerm3)
 
@@ -10302,7 +10303,7 @@ state 710
 
 state 711
 
-   71 view: KW_VIEW $@16 token KW_FROM moduleExpr $@17 KW_TO moduleExpr $@18 expectedIs viewDecList KW_ENDV .
+   71 view: KW_VIEW @16 token KW_FROM moduleExpr @17 KW_TO moduleExpr @18 expectedIs viewDecList KW_ENDV .
 
     $default  reduce using rule 71 (view)
 
@@ -10374,11 +10375,11 @@ state 712
 
 state 713
 
-   79 viewDeclaration: KW_OP . $@19 viewEndOpMap
+   79 viewDeclaration: KW_OP . @19 viewEndOpMap
 
-    $default  reduce using rule 78 ($@19)
+    $default  reduce using rule 78 (@19)
 
-    $@19  go to state 752
+    @19  go to state 752
 
 
 state 714
@@ -10476,7 +10477,7 @@ state 716
 
 state 717
 
-  240 sortNameFrag: sortNameFrag '{' $@58 . sortNameFrags '}'
+  240 sortNameFrag: sortNameFrag '{' @58 . sortNameFrags '}'
 
     KW_ENDM       shift, and go to state 122
     KW_IMPORT     shift, and go to state 123
@@ -10541,7 +10542,7 @@ state 717
 
 state 718
 
-   54 fromSpec: ':' $@11 . typeList arrow typeName
+   54 fromSpec: ':' @11 . typeList arrow typeName
 
     $default  reduce using rule 176 (typeList)
 
@@ -10550,11 +10551,11 @@ state 718
 
 state 719
 
-   52 mapping: KW_OP $@9 fromSpec KW_TO . $@10 toAttributes
+   52 mapping: KW_OP @9 fromSpec KW_TO . @10 toAttributes
 
-    $default  reduce using rule 51 ($@10)
+    $default  reduce using rule 51 (@10)
 
-    $@10  go to state 757
+    @10  go to state 757
 
 
 state 720
@@ -10567,7 +10568,7 @@ state 720
 state 721
 
   231 sortNameList: sortNameList . sortName
-  236 subsortList: sortName $@57 sortNameList . '<'
+  236 subsortList: sortName @57 sortNameList . '<'
 
     KW_ENDM       shift, and go to state 122
     KW_IMPORT     shift, and go to state 123
@@ -10633,14 +10634,14 @@ state 721
 
 state 722
 
-  118 declaration: KW_OP $@28 ':' $@29 domainRangeAttr .
+  118 declaration: KW_OP @28 ':' @29 domainRangeAttr .
 
     $default  reduce using rule 118 (declaration)
 
 
 state 723
 
-  179 typeName: '[' $@49 . sortNames ']'
+  179 typeName: '[' @49 . sortNames ']'
 
     KW_ENDM       shift, and go to state 122
     KW_IMPORT     shift, and go to state 123
@@ -10898,69 +10899,69 @@ state 739
 
 state 740
 
-  147 declaration: KW_CLASS token $@47 classDef '.' .
+  147 declaration: KW_CLASS token @47 classDef '.' .
 
     $default  reduce using rule 147 (declaration)
 
 
 state 741
 
-  123 declaration: KW_MB $@30 ':' $@31 endBubble .
+  123 declaration: KW_MB @30 ':' @31 endBubble .
 
     $default  reduce using rule 123 (declaration)
 
 
 state 742
 
-  127 declaration: KW_CMB $@32 ':' $@33 KW_IF . $@34 endBubble
+  127 declaration: KW_CMB @32 ':' @33 KW_IF . @34 endBubble
 
-    $default  reduce using rule 126 ($@34)
+    $default  reduce using rule 126 (@34)
 
-    $@34  go to state 772
+    @34  go to state 772
 
 
 state 743
 
-  130 declaration: KW_EQ $@35 '=' $@36 endBubble .
+  130 declaration: KW_EQ @35 '=' @36 endBubble .
 
     $default  reduce using rule 130 (declaration)
 
 
 state 744
 
-  134 declaration: KW_CEQ $@37 '=' $@38 KW_IF . $@39 endBubble
+  134 declaration: KW_CEQ @37 '=' @38 KW_IF . @39 endBubble
 
-    $default  reduce using rule 133 ($@39)
+    $default  reduce using rule 133 (@39)
 
-    $@39  go to state 773
+    @39  go to state 773
 
 
 state 745
 
-  137 declaration: KW_RL $@40 KW_ARROW2 $@41 endBubble .
+  137 declaration: KW_RL @40 KW_ARROW2 @41 endBubble .
 
     $default  reduce using rule 137 (declaration)
 
 
 state 746
 
-  141 declaration: KW_CRL $@42 KW_ARROW2 $@43 KW_IF . $@44 endBubble
+  141 declaration: KW_CRL @42 KW_ARROW2 @43 KW_IF . @44 endBubble
 
-    $default  reduce using rule 140 ($@44)
+    $default  reduce using rule 140 (@44)
 
-    $@44  go to state 774
+    @44  go to state 774
 
 
 state 747
 
-  144 declaration: KW_MSG $@45 ':' $@46 domainRangeAttr .
+  144 declaration: KW_MSG @45 ':' @46 domainRangeAttr .
 
     $default  reduce using rule 144 (declaration)
 
 
 state 748
 
-  536 numbersModuleTerm4: ']' $@114 . moduleAndTerm
+  536 numbersModuleTerm4: ']' @114 . moduleAndTerm
 
     ':'          shift, and go to state 195
     '('          shift, and go to state 196
@@ -10980,7 +10981,7 @@ state 748
 
 state 749
 
-  538 numbersModuleTerm4: cTokenBarDotRight $@115 . endBubble
+  538 numbersModuleTerm4: cTokenBarDotRight @115 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -11004,7 +11005,7 @@ state 751
 
 state 752
 
-   79 viewDeclaration: KW_OP $@19 . viewEndOpMap
+   79 viewDeclaration: KW_OP @19 . viewEndOpMap
 
     ':'    shift, and go to state 778
     KW_TO  shift, and go to state 779
@@ -11094,7 +11095,7 @@ state 753
 
 state 754
 
-  240 sortNameFrag: sortNameFrag . '{' $@58 sortNameFrags '}'
+  240 sortNameFrag: sortNameFrag . '{' @58 sortNameFrags '}'
   243 sortNameFrags: sortNameFrag .
 
     '{'  shift, and go to state 663
@@ -11104,8 +11105,8 @@ state 754
 
 state 755
 
-  240 sortNameFrag: sortNameFrag '{' $@58 sortNameFrags . '}'
-  242 sortNameFrags: sortNameFrags . ',' $@59 sortNameFrag
+  240 sortNameFrag: sortNameFrag '{' @58 sortNameFrags . '}'
+  242 sortNameFrags: sortNameFrags . ',' @59 sortNameFrag
 
     ','  shift, and go to state 782
     '}'  shift, and go to state 783
@@ -11113,7 +11114,7 @@ state 755
 
 state 756
 
-   54 fromSpec: ':' $@11 typeList . arrow typeName
+   54 fromSpec: ':' @11 typeList . arrow typeName
   175 typeList: typeList . typeName
 
     KW_ENDM       shift, and go to state 122
@@ -11184,7 +11185,7 @@ state 756
 
 state 757
 
-   52 mapping: KW_OP $@9 fromSpec KW_TO $@10 . toAttributes
+   52 mapping: KW_OP @9 fromSpec KW_TO @10 . toAttributes
 
     '['  shift, and go to state 785
 
@@ -11195,14 +11196,14 @@ state 757
 
 state 758
 
-  236 subsortList: sortName $@57 sortNameList '<' .
+  236 subsortList: sortName @57 sortNameList '<' .
 
     $default  reduce using rule 236 (subsortList)
 
 
 state 759
 
-  179 typeName: '[' $@49 sortNames . ']'
+  179 typeName: '[' @49 sortNames . ']'
   180 sortNames: sortNames . ',' sortName
 
     ']'  shift, and go to state 787
@@ -11472,7 +11473,7 @@ state 771
 
 state 772
 
-  127 declaration: KW_CMB $@32 ':' $@33 KW_IF $@34 . endBubble
+  127 declaration: KW_CMB @32 ':' @33 KW_IF @34 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -11482,7 +11483,7 @@ state 772
 
 state 773
 
-  134 declaration: KW_CEQ $@37 '=' $@38 KW_IF $@39 . endBubble
+  134 declaration: KW_CEQ @37 '=' @38 KW_IF @39 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -11492,7 +11493,7 @@ state 773
 
 state 774
 
-  141 declaration: KW_CRL $@42 KW_ARROW2 $@43 KW_IF $@44 . endBubble
+  141 declaration: KW_CRL @42 KW_ARROW2 @43 KW_IF @44 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -11502,14 +11503,14 @@ state 774
 
 state 775
 
-  536 numbersModuleTerm4: ']' $@114 moduleAndTerm .
+  536 numbersModuleTerm4: ']' @114 moduleAndTerm .
 
     $default  reduce using rule 536 (numbersModuleTerm4)
 
 
 state 776
 
-  538 numbersModuleTerm4: cTokenBarDotRight $@115 endBubble .
+  538 numbersModuleTerm4: cTokenBarDotRight @115 endBubble .
 
     $default  reduce using rule 538 (numbersModuleTerm4)
 
@@ -11583,25 +11584,25 @@ state 777
 
 state 778
 
-   85 viewEndOpMap: ':' . $@20 typeList arrow typeName KW_TO $@21 endBubble
+   85 viewEndOpMap: ':' . @20 typeList arrow typeName KW_TO @21 endBubble
 
-    $default  reduce using rule 83 ($@20)
+    $default  reduce using rule 83 (@20)
 
-    $@20  go to state 824
+    @20  go to state 824
 
 
 state 779
 
-   87 viewEndOpMap: KW_TO . $@22 endBubble
+   87 viewEndOpMap: KW_TO . @22 endBubble
 
-    $default  reduce using rule 86 ($@22)
+    $default  reduce using rule 86 (@22)
 
-    $@22  go to state 825
+    @22  go to state 825
 
 
 state 780
 
-   79 viewDeclaration: KW_OP $@19 viewEndOpMap .
+   79 viewDeclaration: KW_OP @19 viewEndOpMap .
 
     $default  reduce using rule 79 (viewDeclaration)
 
@@ -11619,23 +11620,23 @@ state 781
 
 state 782
 
-  242 sortNameFrags: sortNameFrags ',' . $@59 sortNameFrag
+  242 sortNameFrags: sortNameFrags ',' . @59 sortNameFrag
 
-    $default  reduce using rule 241 ($@59)
+    $default  reduce using rule 241 (@59)
 
-    $@59  go to state 827
+    @59  go to state 827
 
 
 state 783
 
-  240 sortNameFrag: sortNameFrag '{' $@58 sortNameFrags '}' .
+  240 sortNameFrag: sortNameFrag '{' @58 sortNameFrags '}' .
 
     $default  reduce using rule 240 (sortNameFrag)
 
 
 state 784
 
-   54 fromSpec: ':' $@11 typeList arrow . typeName
+   54 fromSpec: ':' @11 typeList arrow . typeName
 
     KW_ENDM       shift, and go to state 122
     KW_IMPORT     shift, and go to state 123
@@ -11702,23 +11703,23 @@ state 784
 
 state 785
 
-   57 toAttributes: '[' . $@12 toAttributeList ']'
+   57 toAttributes: '[' . @12 toAttributeList ']'
 
-    $default  reduce using rule 56 ($@12)
+    $default  reduce using rule 56 (@12)
 
-    $@12  go to state 829
+    @12  go to state 829
 
 
 state 786
 
-   52 mapping: KW_OP $@9 fromSpec KW_TO $@10 toAttributes .
+   52 mapping: KW_OP @9 fromSpec KW_TO @10 toAttributes .
 
     $default  reduce using rule 52 (mapping)
 
 
 state 787
 
-  179 typeName: '[' $@49 sortNames ']' .
+  179 typeName: '[' @49 sortNames ']' .
 
     $default  reduce using rule 179 (typeName)
 
@@ -11846,7 +11847,7 @@ state 796
 
 state 797
 
-  197 attribute: KW_GATHER . '(' $@51 idList ')'
+  197 attribute: KW_GATHER . '(' @51 idList ')'
 
     '('  shift, and go to state 834
 
@@ -11860,14 +11861,14 @@ state 798
 
 state 799
 
-  201 attribute: KW_STRAT . '(' $@53 idList ')'
+  201 attribute: KW_STRAT . '(' @53 idList ')'
 
     '('  shift, and go to state 836
 
 
 state 800
 
-  203 attribute: KW_POLY . '(' $@54 idList ')'
+  203 attribute: KW_POLY . '(' @54 idList ')'
 
     '('  shift, and go to state 837
 
@@ -11882,7 +11883,7 @@ state 801
 state 802
 
   206 attribute: KW_FROZEN .
-  208          | KW_FROZEN . '(' $@55 idList ')'
+  208          | KW_FROZEN . '(' @55 idList ')'
 
     '('  shift, and go to state 838
 
@@ -11898,7 +11899,7 @@ state 803
 
 state 804
 
-  214 attribute: KW_LATEX . '(' $@56 LATEX_STRING ')'
+  214 attribute: KW_LATEX . '(' @56 LATEX_STRING ')'
 
     '('  shift, and go to state 839
 
@@ -11940,7 +11941,7 @@ state 809
 
 state 810
 
-  199 attribute: KW_FORMAT . '(' $@52 idList ')'
+  199 attribute: KW_FORMAT . '(' @52 idList ')'
 
     '('  shift, and go to state 841
 
@@ -11980,11 +11981,11 @@ state 811
 
 state 812
 
-  192 attribute: idKeyword . $@50 identity
+  192 attribute: idKeyword . @50 identity
 
-    $default  reduce using rule 191 ($@50)
+    $default  reduce using rule 191 (@50)
 
-    $@50  go to state 844
+    @50  go to state 844
 
 
 state 813
@@ -12024,21 +12025,21 @@ state 817
 
 state 818
 
-  127 declaration: KW_CMB $@32 ':' $@33 KW_IF $@34 endBubble .
+  127 declaration: KW_CMB @32 ':' @33 KW_IF @34 endBubble .
 
     $default  reduce using rule 127 (declaration)
 
 
 state 819
 
-  134 declaration: KW_CEQ $@37 '=' $@38 KW_IF $@39 endBubble .
+  134 declaration: KW_CEQ @37 '=' @38 KW_IF @39 endBubble .
 
     $default  reduce using rule 134 (declaration)
 
 
 state 820
 
-  141 declaration: KW_CRL $@42 KW_ARROW2 $@43 KW_IF $@44 endBubble .
+  141 declaration: KW_CRL @42 KW_ARROW2 @43 KW_IF @44 endBubble .
 
     $default  reduce using rule 141 (declaration)
 
@@ -12070,7 +12071,7 @@ state 823
 
 state 824
 
-   85 viewEndOpMap: ':' $@20 . typeList arrow typeName KW_TO $@21 endBubble
+   85 viewEndOpMap: ':' @20 . typeList arrow typeName KW_TO @21 endBubble
 
     $default  reduce using rule 176 (typeList)
 
@@ -12079,7 +12080,7 @@ state 824
 
 state 825
 
-   87 viewEndOpMap: KW_TO $@22 . endBubble
+   87 viewEndOpMap: KW_TO @22 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -12159,7 +12160,7 @@ state 826
 
 state 827
 
-  242 sortNameFrags: sortNameFrags ',' $@59 . sortNameFrag
+  242 sortNameFrags: sortNameFrags ',' @59 . sortNameFrag
 
     KW_ENDM       shift, and go to state 122
     KW_IMPORT     shift, and go to state 123
@@ -12223,14 +12224,14 @@ state 827
 
 state 828
 
-   54 fromSpec: ':' $@11 typeList arrow typeName .
+   54 fromSpec: ':' @11 typeList arrow typeName .
 
     $default  reduce using rule 54 (fromSpec)
 
 
 state 829
 
-   57 toAttributes: '[' $@12 . toAttributeList ']'
+   57 toAttributes: '[' @12 . toAttributeList ']'
 
     KW_PREC    shift, and go to state 850
     KW_GATHER  shift, and go to state 851
@@ -12271,11 +12272,11 @@ state 833
 
 state 834
 
-  197 attribute: KW_GATHER '(' . $@51 idList ')'
+  197 attribute: KW_GATHER '(' . @51 idList ')'
 
-    $default  reduce using rule 196 ($@51)
+    $default  reduce using rule 196 (@51)
 
-    $@51  go to state 856
+    @51  go to state 856
 
 
 state 835
@@ -12287,38 +12288,38 @@ state 835
 
 state 836
 
-  201 attribute: KW_STRAT '(' . $@53 idList ')'
+  201 attribute: KW_STRAT '(' . @53 idList ')'
 
-    $default  reduce using rule 200 ($@53)
+    $default  reduce using rule 200 (@53)
 
-    $@53  go to state 857
+    @53  go to state 857
 
 
 state 837
 
-  203 attribute: KW_POLY '(' . $@54 idList ')'
+  203 attribute: KW_POLY '(' . @54 idList ')'
 
-    $default  reduce using rule 202 ($@54)
+    $default  reduce using rule 202 (@54)
 
-    $@54  go to state 858
+    @54  go to state 858
 
 
 state 838
 
-  208 attribute: KW_FROZEN '(' . $@55 idList ')'
+  208 attribute: KW_FROZEN '(' . @55 idList ')'
 
-    $default  reduce using rule 207 ($@55)
+    $default  reduce using rule 207 (@55)
 
-    $@55  go to state 859
+    @55  go to state 859
 
 
 state 839
 
-  214 attribute: KW_LATEX '(' . $@56 LATEX_STRING ')'
+  214 attribute: KW_LATEX '(' . @56 LATEX_STRING ')'
 
-    $default  reduce using rule 213 ($@56)
+    $default  reduce using rule 213 (@56)
 
-    $@56  go to state 860
+    @56  go to state 860
 
 
 state 840
@@ -12335,11 +12336,11 @@ state 840
 
 state 841
 
-  199 attribute: KW_FORMAT '(' . $@52 idList ')'
+  199 attribute: KW_FORMAT '(' . @52 idList ')'
 
-    $default  reduce using rule 198 ($@52)
+    $default  reduce using rule 198 (@52)
 
-    $@52  go to state 866
+    @52  go to state 866
 
 
 state 842
@@ -12358,7 +12359,7 @@ state 843
 
 state 844
 
-  192 attribute: idKeyword $@50 . identity
+  192 attribute: idKeyword @50 . identity
 
     FORCE_LOOKAHEAD  shift, and go to state 867
 
@@ -12376,7 +12377,7 @@ state 845
 
 state 846
 
-   85 viewEndOpMap: ':' $@20 typeList . arrow typeName KW_TO $@21 endBubble
+   85 viewEndOpMap: ':' @20 typeList . arrow typeName KW_TO @21 endBubble
   175 typeList: typeList . typeName
 
     KW_ENDM       shift, and go to state 122
@@ -12447,7 +12448,7 @@ state 846
 
 state 847
 
-   87 viewEndOpMap: KW_TO $@22 endBubble .
+   87 viewEndOpMap: KW_TO @22 endBubble .
 
     $default  reduce using rule 87 (viewEndOpMap)
 
@@ -12461,8 +12462,8 @@ state 848
 
 state 849
 
-  240 sortNameFrag: sortNameFrag . '{' $@58 sortNameFrags '}'
-  242 sortNameFrags: sortNameFrags ',' $@59 sortNameFrag .
+  240 sortNameFrag: sortNameFrag . '{' @58 sortNameFrags '}'
+  242 sortNameFrags: sortNameFrags ',' @59 sortNameFrag .
 
     '{'  shift, and go to state 663
 
@@ -12478,28 +12479,28 @@ state 850
 
 state 851
 
-   63 toAttribute: KW_GATHER . '(' $@13 idList ')'
+   63 toAttribute: KW_GATHER . '(' @13 idList ')'
 
     '('  shift, and go to state 871
 
 
 state 852
 
-   67 toAttribute: KW_LATEX . '(' $@15 LATEX_STRING ')'
+   67 toAttribute: KW_LATEX . '(' @15 LATEX_STRING ')'
 
     '('  shift, and go to state 872
 
 
 state 853
 
-   65 toAttribute: KW_FORMAT . '(' $@14 idList ')'
+   65 toAttribute: KW_FORMAT . '(' @14 idList ')'
 
     '('  shift, and go to state 873
 
 
 state 854
 
-   57 toAttributes: '[' $@12 toAttributeList . ']'
+   57 toAttributes: '[' @12 toAttributeList . ']'
    59 toAttributeList: toAttributeList . toAttribute
 
     ']'        shift, and go to state 874
@@ -12520,7 +12521,7 @@ state 855
 
 state 856
 
-  197 attribute: KW_GATHER '(' $@51 . idList ')'
+  197 attribute: KW_GATHER '(' @51 . idList ')'
 
     IDENTIFIER  shift, and go to state 876
 
@@ -12529,7 +12530,7 @@ state 856
 
 state 857
 
-  201 attribute: KW_STRAT '(' $@53 . idList ')'
+  201 attribute: KW_STRAT '(' @53 . idList ')'
 
     IDENTIFIER  shift, and go to state 876
 
@@ -12538,7 +12539,7 @@ state 857
 
 state 858
 
-  203 attribute: KW_POLY '(' $@54 . idList ')'
+  203 attribute: KW_POLY '(' @54 . idList ')'
 
     IDENTIFIER  shift, and go to state 876
 
@@ -12547,7 +12548,7 @@ state 858
 
 state 859
 
-  208 attribute: KW_FROZEN '(' $@55 . idList ')'
+  208 attribute: KW_FROZEN '(' @55 . idList ')'
 
     IDENTIFIER  shift, and go to state 876
 
@@ -12556,7 +12557,7 @@ state 859
 
 state 860
 
-  214 attribute: KW_LATEX '(' $@56 . LATEX_STRING ')'
+  214 attribute: KW_LATEX '(' @56 . LATEX_STRING ')'
 
     LATEX_STRING  shift, and go to state 881
 
@@ -12824,7 +12825,7 @@ state 865
 
 state 866
 
-  199 attribute: KW_FORMAT '(' $@52 . idList ')'
+  199 attribute: KW_FORMAT '(' @52 . idList ')'
 
     IDENTIFIER  shift, and go to state 876
 
@@ -12840,14 +12841,14 @@ state 867
 
 state 868
 
-  192 attribute: idKeyword $@50 identity .
+  192 attribute: idKeyword @50 identity .
 
     $default  reduce using rule 192 (attribute)
 
 
 state 869
 
-   85 viewEndOpMap: ':' $@20 typeList arrow . typeName KW_TO $@21 endBubble
+   85 viewEndOpMap: ':' @20 typeList arrow . typeName KW_TO @21 endBubble
 
     KW_ENDM       shift, and go to state 122
     KW_IMPORT     shift, and go to state 123
@@ -12921,34 +12922,34 @@ state 870
 
 state 871
 
-   63 toAttribute: KW_GATHER '(' . $@13 idList ')'
+   63 toAttribute: KW_GATHER '(' . @13 idList ')'
 
-    $default  reduce using rule 62 ($@13)
+    $default  reduce using rule 62 (@13)
 
-    $@13  go to state 889
+    @13  go to state 889
 
 
 state 872
 
-   67 toAttribute: KW_LATEX '(' . $@15 LATEX_STRING ')'
+   67 toAttribute: KW_LATEX '(' . @15 LATEX_STRING ')'
 
-    $default  reduce using rule 66 ($@15)
+    $default  reduce using rule 66 (@15)
 
-    $@15  go to state 890
+    @15  go to state 890
 
 
 state 873
 
-   65 toAttribute: KW_FORMAT '(' . $@14 idList ')'
+   65 toAttribute: KW_FORMAT '(' . @14 idList ')'
 
-    $default  reduce using rule 64 ($@14)
+    $default  reduce using rule 64 (@14)
 
-    $@14  go to state 891
+    @14  go to state 891
 
 
 state 874
 
-   57 toAttributes: '[' $@12 toAttributeList ']' .
+   57 toAttributes: '[' @12 toAttributeList ']' .
 
     $default  reduce using rule 57 (toAttributes)
 
@@ -12969,7 +12970,7 @@ state 876
 
 state 877
 
-  197 attribute: KW_GATHER '(' $@51 idList . ')'
+  197 attribute: KW_GATHER '(' @51 idList . ')'
   219 idList: idList . IDENTIFIER
 
     ')'         shift, and go to state 892
@@ -12978,7 +12979,7 @@ state 877
 
 state 878
 
-  201 attribute: KW_STRAT '(' $@53 idList . ')'
+  201 attribute: KW_STRAT '(' @53 idList . ')'
   219 idList: idList . IDENTIFIER
 
     ')'         shift, and go to state 894
@@ -12987,7 +12988,7 @@ state 878
 
 state 879
 
-  203 attribute: KW_POLY '(' $@54 idList . ')'
+  203 attribute: KW_POLY '(' @54 idList . ')'
   219 idList: idList . IDENTIFIER
 
     ')'         shift, and go to state 895
@@ -12996,7 +12997,7 @@ state 879
 
 state 880
 
-  208 attribute: KW_FROZEN '(' $@55 idList . ')'
+  208 attribute: KW_FROZEN '(' @55 idList . ')'
   219 idList: idList . IDENTIFIER
 
     ')'         shift, and go to state 896
@@ -13005,7 +13006,7 @@ state 880
 
 state 881
 
-  214 attribute: KW_LATEX '(' $@56 LATEX_STRING . ')'
+  214 attribute: KW_LATEX '(' @56 LATEX_STRING . ')'
 
     ')'  shift, and go to state 897
 
@@ -13056,7 +13057,7 @@ state 886
 
 state 887
 
-  199 attribute: KW_FORMAT '(' $@52 idList . ')'
+  199 attribute: KW_FORMAT '(' @52 idList . ')'
   219 idList: idList . IDENTIFIER
 
     ')'         shift, and go to state 901
@@ -13065,14 +13066,14 @@ state 887
 
 state 888
 
-   85 viewEndOpMap: ':' $@20 typeList arrow typeName . KW_TO $@21 endBubble
+   85 viewEndOpMap: ':' @20 typeList arrow typeName . KW_TO @21 endBubble
 
     KW_TO  shift, and go to state 902
 
 
 state 889
 
-   63 toAttribute: KW_GATHER '(' $@13 . idList ')'
+   63 toAttribute: KW_GATHER '(' @13 . idList ')'
 
     IDENTIFIER  shift, and go to state 876
 
@@ -13081,14 +13082,14 @@ state 889
 
 state 890
 
-   67 toAttribute: KW_LATEX '(' $@15 . LATEX_STRING ')'
+   67 toAttribute: KW_LATEX '(' @15 . LATEX_STRING ')'
 
     LATEX_STRING  shift, and go to state 904
 
 
 state 891
 
-   65 toAttribute: KW_FORMAT '(' $@14 . idList ')'
+   65 toAttribute: KW_FORMAT '(' @14 . idList ')'
 
     IDENTIFIER  shift, and go to state 876
 
@@ -13097,7 +13098,7 @@ state 891
 
 state 892
 
-  197 attribute: KW_GATHER '(' $@51 idList ')' .
+  197 attribute: KW_GATHER '(' @51 idList ')' .
 
     $default  reduce using rule 197 (attribute)
 
@@ -13111,28 +13112,28 @@ state 893
 
 state 894
 
-  201 attribute: KW_STRAT '(' $@53 idList ')' .
+  201 attribute: KW_STRAT '(' @53 idList ')' .
 
     $default  reduce using rule 201 (attribute)
 
 
 state 895
 
-  203 attribute: KW_POLY '(' $@54 idList ')' .
+  203 attribute: KW_POLY '(' @54 idList ')' .
 
     $default  reduce using rule 203 (attribute)
 
 
 state 896
 
-  208 attribute: KW_FROZEN '(' $@55 idList ')' .
+  208 attribute: KW_FROZEN '(' @55 idList ')' .
 
     $default  reduce using rule 208 (attribute)
 
 
 state 897
 
-  214 attribute: KW_LATEX '(' $@56 LATEX_STRING ')' .
+  214 attribute: KW_LATEX '(' @56 LATEX_STRING ')' .
 
     $default  reduce using rule 214 (attribute)
 
@@ -13160,23 +13161,23 @@ state 900
 
 state 901
 
-  199 attribute: KW_FORMAT '(' $@52 idList ')' .
+  199 attribute: KW_FORMAT '(' @52 idList ')' .
 
     $default  reduce using rule 199 (attribute)
 
 
 state 902
 
-   85 viewEndOpMap: ':' $@20 typeList arrow typeName KW_TO . $@21 endBubble
+   85 viewEndOpMap: ':' @20 typeList arrow typeName KW_TO . @21 endBubble
 
-    $default  reduce using rule 84 ($@21)
+    $default  reduce using rule 84 (@21)
 
-    $@21  go to state 906
+    @21  go to state 906
 
 
 state 903
 
-   63 toAttribute: KW_GATHER '(' $@13 idList . ')'
+   63 toAttribute: KW_GATHER '(' @13 idList . ')'
   219 idList: idList . IDENTIFIER
 
     ')'         shift, and go to state 907
@@ -13185,14 +13186,14 @@ state 903
 
 state 904
 
-   67 toAttribute: KW_LATEX '(' $@15 LATEX_STRING . ')'
+   67 toAttribute: KW_LATEX '(' @15 LATEX_STRING . ')'
 
     ')'  shift, and go to state 908
 
 
 state 905
 
-   65 toAttribute: KW_FORMAT '(' $@14 idList . ')'
+   65 toAttribute: KW_FORMAT '(' @14 idList . ')'
   219 idList: idList . IDENTIFIER
 
     ')'         shift, and go to state 909
@@ -13201,7 +13202,7 @@ state 905
 
 state 906
 
-   85 viewEndOpMap: ':' $@20 typeList arrow typeName KW_TO $@21 . endBubble
+   85 viewEndOpMap: ':' @20 typeList arrow typeName KW_TO @21 . endBubble
 
     '.'          shift, and go to state 281
     ENDS_IN_DOT  shift, and go to state 282
@@ -13211,27 +13212,27 @@ state 906
 
 state 907
 
-   63 toAttribute: KW_GATHER '(' $@13 idList ')' .
+   63 toAttribute: KW_GATHER '(' @13 idList ')' .
 
     $default  reduce using rule 63 (toAttribute)
 
 
 state 908
 
-   67 toAttribute: KW_LATEX '(' $@15 LATEX_STRING ')' .
+   67 toAttribute: KW_LATEX '(' @15 LATEX_STRING ')' .
 
     $default  reduce using rule 67 (toAttribute)
 
 
 state 909
 
-   65 toAttribute: KW_FORMAT '(' $@14 idList ')' .
+   65 toAttribute: KW_FORMAT '(' @14 idList ')' .
 
     $default  reduce using rule 65 (toAttribute)
 
 
 state 910
 
-   85 viewEndOpMap: ':' $@20 typeList arrow typeName KW_TO $@21 endBubble .
+   85 viewEndOpMap: ':' @20 typeList arrow typeName KW_TO @21 endBubble .
 
     $default  reduce using rule 85 (viewEndOpMap)
