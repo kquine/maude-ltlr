@@ -71,8 +71,11 @@ set verbose on .
 --- false. (only for ground weak fairness)
 (mc init |= <> rec under
     (just : enabled(req(b)) => req(b)) ;
+    (just : enabled(req(c)) => req(c)) ;
     (just : enabled(reply(a,b)) => reply(a,b)) ;
-    (just : enabled(rec(b)) => rec(b))
+    (just : enabled(reply(a,c)) => reply(a,c)) ;
+    (just : enabled(rec(b)) => rec(b)) ;
+    (just : enabled(rec(c)) => rec(c))
 .)
 
 --- true. (ground weak and strong fairness)
