@@ -17,6 +17,9 @@ view SubsortDeclSet from TRIV to META-MODULE is sort Elt to SubsortDeclSet . end
 --- And repeat with a sort of the operator f. 
 --- For A, AC, ACU operators, similar with extension.. 
 
+--- TODO: remove id attributes before module transformations
+--- TODO: find ambiguous action patterns...
+
 --- op/sort name definitions
 fmod TLR-META-DEF is
   pr META-TERM .
@@ -179,9 +182,16 @@ endfm
 ***       Rule Attribute Parser
 ******************************************************************************
 
+fmod QID? is pr QID .
+  sort Qid? .  subsort Qid < Qid? .
+  op noQid : -> Qid? [ctor] .
+endfm
+
+view Qid? from TRIV to QID? is sort Elt to Qid? . endv
+
 --- attr parse result
 fmod TLR-ATTR is 
-  pr 2TUPLE{Qid,QidList} * (sort Tuple{Qid,QidList} to TLRAttr) . 
+  pr 3TUPLE{Qid?,Qid,QidList} * (sort Tuple{Qid?,Qid,QidList} to TLRAttr) . 
 endfm
 
 view TLRAttr from TRIV to TLR-ATTR is sort Elt to TLRAttr . endv
@@ -191,9 +201,12 @@ fmod TLR-ATTR-PARSE is
   pr INT .
   pr SET{TLRAttr} * (sort Set{TLRAttr} to TLRAttrSet, op _,_ to _;_) .
 
-  --- NOTE: the characters ';', ',', '(', ')' should not be used in the names.
+  *********
+  *** NOTE: the characters ';', ',', '(', ')' should not be used in the names.
+  *********
 
-  var S : String .  vars N M : Nat .  var Q : Qid . vars QL QL' : QidList .
+  var S : String .  vars N M : Nat .  
+  var Q? : Qid? . var Q : Qid . vars QL QL' : QidList .
 
   --- parse: item1 ; item2 ; ... ; itemN
   op parseAttr : String ~> TLRAttrSet .
@@ -202,12 +215,19 @@ fmod TLR-ATTR-PARSE is
    if N := find(S, ";", 0) .
   eq parseAttr(S) = parseItem(S) [owise] .
 
-  --- parse: name(q1,q2,...,qk)
+  --- parse: innerItem, name[innerItem]
   op parseItem : String ~> TLRAttr .
  ceq parseItem(S) 
-  = (qid($trim(substr(S,0,N))), parseCList(substr(S, s(N), M - N - 1)))
+  = parseInnerItem(qid($trim(substr(S,0,N))), substr(S, s(N), M - N - 1))
+   if N := find(S, "[", 0) /\ M := rfind(S, "]", length(S)) . 
+  eq parseItem(S) = parseInnerItem(noQid, S) .
+
+  --- parse: name, name(q1,...,qk)
+  op parseInnerItem : Qid? String ~> TLRAttr .
+ ceq parseInnerItem(Q?, S) 
+  = (Q?, qid($trim(substr(S,0,N))), parseCList(substr(S, s(N), M - N - 1)))
    if N := find(S, "(", 0) /\ M := rfind(S, ")", length(S)) . 
-  eq parseItem(S) = (qid($trim(S)), nil) .
+  eq parseInnerItem(Q?, S) = (Q?, qid($trim(S)), nil) .
 
   --- parse comma list
   op parseCList : String ~> QidList .
@@ -227,7 +247,6 @@ fmod TLR-ATTR-PARSE is
    = if substr(S,N,1) == " " then $rtrim(S,N) else substr(S,0,s N) fi .
   eq $rtrim(S,0) = S .
 endfm
-
 
 fmod TLR-ATTR-RES is 
   pr 2TUPLE{Rule,Term} * (sort Tuple{Rule,Term} to AttrRes) .
@@ -251,9 +270,11 @@ fmod TLR-ATTR-INTERPRETE is
      (sort Tuple{AttrResSet,TermSet,TermSet} to IntprtResult,
       op ((_,_,_)) to pat:_fair:_just:_) .
 
-  vars Q QR : Qid . vars QL : QidList . var NQL : NeQidList . var QS : QidSet . 
+  var Q? : Qid? . vars Q QR : Qid . 
+  vars QL : QidList . var NQL : NeQidList . var QS : QidSet . 
   var R : Rule .  var RS : RuleSet .  var AtS : AttrSet .
-  vars T T2 : Term . var TL : TermList .  var V : Variable .  var S : String .
+  vars T T2 : Term . var TL : TermList . var TL? : [TermList] .
+  var V : Variable .  var S : String .
   vars STS STS' WTS WTS' : TermSet . 
   var TAS : TLRAttrSet .  var IR : IntprtResult . 
   var TAR : AttrRes . vars TARS TARS' : AttrResSet .
@@ -262,36 +283,41 @@ fmod TLR-ATTR-INTERPRETE is
   op emptyResult : ~> IntprtResult .
   eq emptyResult = pat: empty fair: emptyTermSet just: emptyTermSet .
 
-  op _+_ : IntprtResult IntprtResult -> IntprtResult [comm] .
+  op _+_ : IntprtResult IntprtResult -> IntprtResult [comm assoc] .
   eq (pat: TARS  fair: STS  just: WTS) + (pat: TARS' fair: STS' just: WTS')
    = (pat: TARS, TARS' fair: STS | STS'  just: WTS | WTS') .
 
 --- return tuple: (patterns, strong_patterns, weak_patterns)
   op intprtAttr : RuleSet ~> IntprtResult .
  ceq intprtAttr(R RS) 
-   = intprtAttr(QR, R, parseAttr(S), vars((lhs(R),lhsMC(cond(R)))), 
-                emptyResult) 
+   = intprtAttr(QR, R, parseAttr(S), vars((lhs(R),lhsMC(cond(R)))))
    + intprtAttr(RS)
    if QR := label(R) /\ metadata(S) AtS := atts(R) /\ cond(R) :: EqCondition .
   eq intprtAttr(RS) = emptyResult [owise] .
 
-  op intprtAttr : Qid Rule TLRAttrSet QidSet IntprtResult ~> IntprtResult .
- ceq intprtAttr(QR, R, (Q,QL) ; TAS, QS, IR)
-  = intprtAttr(QR, R, TAS, QS, IR + caseAttr(QR, Q, (R,T)))
-   if T := createPat(QR, QL, QS) .  
-  eq intprtAttr(QR, R, TAS, QS, IR) = IR [owise] . --- errornous lookup ignored
+  op intprtAttr : Qid Rule TLRAttrSet QidSet ~> IntprtResult .
+  eq intprtAttr(QR, R, (Q?,Q,QL) ; TAS, QS)
+   = intprtAttr(QR, R, TAS, QS) + mkAttr(Q?, Q, QR, R, findVars(QL,QS)) .
+  eq intprtAttr(QR, R, empty, QS) = emptyResult . 
 
-  op caseAttr : Qid Qid AttrRes ~> IntprtResult .
-  eq caseAttr(QR, QR, TAR) = pat: TAR fair: emptyTermSet just: emptyTermSet .
-  eq caseAttr(QR, 'fair, TAR) = pat: TAR fair: p2(TAR) just: emptyTermSet .
-  eq caseAttr(QR, 'just, TAR) = pat: TAR fair: emptyTermSet just: p2(TAR) .
-  eq caseAttr(QR, Q, TAR) = emptyResult [owise] .
+--- create patterns for each case
+  op mkAttr : Qid? Qid Qid Rule TermList ~> IntprtResult .
+  eq mkAttr(noQid, 'just, QR, R, TL)
+   = pat: (R,createPat(QR,TL)) fair: emptyTermSet just: createPat(QR,TL) .
+  eq mkAttr(noQid, 'fair, QR, R, TL)
+   = pat: (R,createPat(QR,TL)) fair: createPat(QR,TL) just: emptyTermSet .
+  eq mkAttr(noQid, Q, QR, R, TL)
+   = pat: (R,createPat(Q,TL)) fair: emptyTermSet just: emptyTermSet [owise] .
+  eq mkAttr('just, Q, QR, R, TL)
+   = pat: (R,createPat(Q,TL)) fair: emptyTermSet just: createPat(Q,TL) .
+  eq mkAttr('fair, Q, QR, R, TL)
+   = pat: (R,createPat(Q,TL)) fair: createPat(Q,TL) just: emptyTermSet .
+  eq mkAttr(Q?, Q, QR, R, TL?) = emptyResult [owise] . --- error ignored
 
 --- create single patterns: name(v1,...,vK)
-  op createPat : Qid QidList QidSet ~> Term .
- ceq createPat(QR, QL, QS) 
-   = if TL == empty then addType(QR,%ACT%SORT%) else (QR[TL]) fi
-   if TL := findVars(QL,QS) .
+  op createPat : Qid TermList ~> Term .
+  eq createPat(Q, TL) 
+   = if TL == empty then addType(Q,%ACT%SORT%) else (Q[TL]) fi .
 
 --- rule variables look-up
   op findVars : QidList QidSet ~> TermList .
@@ -304,13 +330,15 @@ endfm
 
 ---(
 red parseAttr("req; (C) ; req(C,N); req(C,S,N); fair; just(C)") .
+red parseAttr("l ; l(X) ; fair(Y,Z) ; just[l(X1)] ; just[l] ; just[l(X,Y)] ") .
+
 red findVars('C 'S 'N, ('C:Oid ; 'S:Oid ; 'N:Nat ; 'nil.Nat?)) .
 
 red intprtAttr(
-    (rl '`[_`,_`,_`,_`]['C:Oid,'S:Oid,'N:Nat,'nil.Nat?] => 'null.Conf [label('req) metadata("req; req(C,N); req(C,S,N); fair; just(C)")] .)
+    (rl '`[_`,_`,_`,_`]['C:Oid,'S:Oid,'N:Nat,'nil.Nat?] => 'null.Conf [label('req) metadata("req; req(C,N); req(C,S,N); fair; just(C); just[r1(C)]; just[r2]; fair[r3(C,S,N)]")] .)
     (rl '_<-_['I:Oid,'CNT:Cnts] => 'null.Conf [label('dupl) metadata("fair(I); dupl(I,CNT)")] .)
     ) .
-    ---)
+---)
 
 ******************************************************************************
 ***       Declaration Generation
@@ -337,27 +365,30 @@ fmod TLR-DECL-RESULT is
    = (sorts: S1 ; S2 subsorts: SD1 SD2 ops: OS1 OS2 eqs: ES1 ES2 rls: RS1 RS2) .
 endfm
 
+
 fmod TLR-PATTERN-DECL-GENERATE is
   pr TLR-ATTR-INTERPRETE .
   pr TLR-TERM-UTIL .
   pr TLR-DECL-RESULT .
 
-  var Q : Qid . var QS : QidSet . var T : Term . var TS : TermSet .
+  var Q : Qid . var QS : QidSet . 
+  var T : Term . var TS : TermSet .
+  var R : Rule . var TAR : AttrRes . vars TARS TARS' : AttrResSet .
   var TL : TermList . var NTL : NeTermList .
   vars V V' : Variable . var C : Constant . var TY : Type . var TYL : TypeList .
 
 --- operators for basic spatial action patterns
 
-  op patternDecl : TermSet ~> DeclResult .
-  eq patternDecl(T | TS)
+  op patternDecl : AttrResSet ~> DeclResult .
+  eq patternDecl(((R,T),TARS))  --- NOTE: R should have "label" here.
    = (sorts: none
       subsorts: none
       ops: (op top(T) : typeList(Vars(T)) -> %ACT%SORT% [ctor] .) 
             assignOps(typeList(Vars(T))) 
-      eqs: (eq %ACT%CHK%OP%[proofPattern(T),T] = 'true.Bool [none] .)
+      eqs: (eq %ACT%CHK%OP%[proofPattern(label(R),T),T] = 'true.Bool [none] .)
       rls: none)
-   + patternDecl(TS) .
-  eq patternDecl(emptyTermSet) = emptyResult .
+   + patternDecl(TARS) .
+  eq patternDecl(empty) = emptyResult .
 
 --- generating assignment operators
   op assignOps : TypeList -> OpDeclSet .
@@ -366,10 +397,10 @@ fmod TLR-PATTERN-DECL-GENERATE is
      assignOps(TYL) .
   eq assignOps(nil) = none .
 
---- create meta proof term from pattern
-  op proofPattern : Term ~> Term .
-  eq proofPattern(T) 
-   = %PROOF%OP%[fresh(%CONTEXT%VAR%,vars(T)), upQid(top(T)), 
+--- create meta proof term from pattern (but with label Q from a rule)
+  op proofPattern : Qid Term ~> Term .
+  eq proofPattern(Q, T) 
+   = %PROOF%OP%[fresh(%CONTEXT%VAR%,vars(T)), upQid(Q), 
                 proofSubst(Vars(T),fresh(%SUBST%VAR%,vars(T)))] .
 
   --- substitution with additional fresh variable..
@@ -383,11 +414,6 @@ fmod TLR-PATTERN-DECL-GENERATE is
   eq proofAssigns(empty) = empty .
 endfm
 
----(
-red patternDecl(
-      ('dupl['I:Oid]) | ('dupl['I:Oid,'CNT:Cnts]) | 'req.BasicActionPattern
-    | ('req['C:Oid]) | ('req['C:Oid,'N:Nat]) | ('req['C:Oid,'S:Oid,'N:Nat])) .
----)
 
 fmod TLR-ENABLE-PATTERN is
   pr 5TUPLE{Term,Type,Term,TermSet,Condition} * 
@@ -398,6 +424,7 @@ fmod TLR-ENABLE-PATTERN is
 endfm
 
 view EnablePat from TRIV to TLR-ENABLE-PATTERN is sort Elt to EnablePat . endv
+
 
 --- generate skeletons of enabled operators and equations
 --- NOTE: rules in AttrResSet should have EqCondition.
@@ -723,22 +750,20 @@ fmod TLR-BASIC-MODULE-GENERATE is
  ceq basicPatternMod(M)
    = (mod ACTION[getName(M)] is
        including getName(M) .
+       including 'EXT-BOOL .
        including 'LTLR-MODEL-CHECKER .
        sorts none .
        none
-       ops(DCL1) specialTLROp(HL)
+       ops(DCL1) ops(DCL2) specialTLROp(HL)
        none
-       eqs(DCL1)
+       eqs(DCL1) eqs(DCL2)
        none
      endm)
    if IPR := intprtAttr(getRls(M)) 
    /\ EPS := enablePats(M,p1(IPR))
-   /\ DCL1 := patternDecl(getTermSet(p1(IPR)))
+   /\ DCL1 := patternDecl(p1(IPR))
+   /\ DCL2 := enableEqDecl(EPS)
    /\ HL := opHooks('assignmentSymbol,filterOpsByName(%ASSIGN%OP%,ops(DCL1))) .
-
-  op getTermSet : AttrResSet ~> TermSet .
-  eq getTermSet(((R,T), TARS)) = T | getTermSet(TARS) .
-  eq getTermSet(empty) = emptyTermSet .
 endfm
 
 fmod TLR-FAIR-MODULE-GENERATE is
@@ -754,19 +779,16 @@ fmod TLR-FAIR-MODULE-GENERATE is
   op fairMod : Module ~> Module .
  ceq fairMod(M)
    = (mod FAIR[getName(M)] is
-       including 'EXT-BOOL .
        including ACTION[getName(M)] .
        sorts none .
        none
-       ops(DCL2) ops(DCL3) 
+       ops(DCL3) 
        none
-       eqs(DCL2) 
        (eq '#param#flag#.FairFlag = paramFlag(p2(IPR),p3(IPR)) [none] .)
        rls(DCL3)
      endm)
    if IPR := intprtAttr(getRls(M)) 
    /\ EPS := enablePats(M,p1(IPR))
-   /\ DCL2 := enableEqDecl(EPS)
    /\ DCL3 := realizedRlDecl(EPS,p2(IPR),p3(IPR)) .
 
 --- param flags

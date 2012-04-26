@@ -48,9 +48,11 @@ load ltlr-interface
 
 (mod CLIENT-SERVER-CHECK is
   inc CLIENT-SERVER .
+---  inc CONTEXT[CLIENT-SERVER] .  --- to use the context info
   pr SATISFACTION .
 
   subsort Conf < State .
+---  subsorts Conf < Context$Conf < StateContext .  --- to use the context info
 
   op init : -> State .
   eq init = [a] [b,a,1,nil] [c,a,0,nil] . 

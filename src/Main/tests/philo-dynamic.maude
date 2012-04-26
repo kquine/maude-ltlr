@@ -53,12 +53,15 @@ load ltlr-interface
 endm)
 
 (mod PHILO-CHECK is
-  inc PHILO .
   pr LTLR-MODEL-CHECKER .
+  inc PHILO .
+---  inc CONTEXT[PHILO] . --- for context
 
   vars P Q N C : Nat .  var I J : NzNat . var CF : Conf .
 
   subsort Top < State .
+---  subsort Top < Context$Top < StateContext . --- for context
+
   op init : Nat -> Top .
   eq init(P) = < P, 2, ph(1, think, 0) ; stk(1) ; ph(2, think, 0) ; stk(2) > .
 
