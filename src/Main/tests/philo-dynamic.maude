@@ -52,6 +52,9 @@ load ltlr-interface
            => < P, s s N, CF > .
 endm)
 
+--- the following module defines the state sort for the model checking
+--- and extra state predicates.
+
 (mod PHILO-CHECK is
   pr LTLR-MODEL-CHECKER .
   inc PHILO .

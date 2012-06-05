@@ -738,6 +738,7 @@ fmod TLR-BASIC-MODULE-GENERATE is
   pr TLR-PATTERN-DECL-GENERATE .
   pr TLR-ENABLED-DECL-GENERATE .
   pr TLR-MODULE-UTIL .
+  pr UNIT .  --- for the addDecl function
 
   var M : Module . var R : Rule . var T : Term . 
   var TARS : AttrResSet .  var HL : HookList .  
@@ -748,8 +749,7 @@ fmod TLR-BASIC-MODULE-GENERATE is
 
   op basicPatternMod : Module ~> Module .
  ceq basicPatternMod(M)
-   = (mod ACTION[getName(M)] is
-       including getName(M) .
+   = addDecls(mod ACTION[getName(M)] is
        including 'EXT-BOOL .
        including 'LTLR-MODEL-CHECKER .
        sorts none .
@@ -758,7 +758,7 @@ fmod TLR-BASIC-MODULE-GENERATE is
        none
        eqs(DCL1) eqs(DCL2)
        none
-     endm)
+     endm, M)
    if IPR := intprtAttr(getRls(M)) 
    /\ EPS := enablePats(M,p1(IPR))
    /\ DCL1 := patternDecl(p1(IPR))

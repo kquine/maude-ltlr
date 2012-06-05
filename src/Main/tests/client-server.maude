@@ -43,16 +43,32 @@ mod CLIENT-SERVER is
     rl [loss] : I <- CNT => null  .
 endm
 
+---(
+In order to use LTLR model-checker commands, we first need to
+load the ltlr-interface.maude file, and then define a module
+in Full-Maude that includes both the original module M and SATISFACTION.
+Here, we can also include CONTEXT[M] instead of M in order to use
+the context information in the action pattern.
+
+The new module in Full Maude should define a state sort 
+(and a state context sort if CONTEXT[M] was used). If a state sort in the
+original module is TOP, then the new module should include:
+
+subsort TOP < State .
+subsort TOP < Context$TOP < StateContext . --- only if CONTEXT[M] used.
+
+After then, we can freely define extra state/event propositions.
+---)
+
 --- Full-Maude interface for LTLR model checknig under parameterized fairness
 load ltlr-interface
 
 (mod CLIENT-SERVER-CHECK is
-  inc CLIENT-SERVER .
----  inc CONTEXT[CLIENT-SERVER] .  --- to use the context info
+  inc CONTEXT[CLIENT-SERVER] .  --- to use the context info
   pr SATISFACTION .
 
   subsort Conf < State .
----  subsorts Conf < Context$Conf < StateContext .  --- to use the context info
+  subsorts Conf < Context$Conf < StateContext .  --- to use the context info
 
   op init : -> State .
   eq init = [a] [b,a,1,nil] [c,a,0,nil] . 
