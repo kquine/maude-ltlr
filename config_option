@@ -1,1 +1,1 @@
-./configure CC="gcc-mp-4.6" CPPFLAGS="-I/opt/local/include -I/Users/kquine/usr/include" LDFLAGS="-L/opt/local/lib" CFLAGS="-O2" CXXFLAGS="-O2" TECLA_LIBS="/USERS/kquine/usr/lib/libtecla.a -lcurses"
+./configure CC="gcc-mp-4.6" CXX="g++-mp-4.6" CPPFLAGS="-I/opt/local/include -I/Users/kquine/usr/include" LDFLAGS="-L/opt/local/lib" CFLAGS="-O2" CXXFLAGS="-O2" TECLA_LIBS="/USERS/kquine/usr/lib/libtecla.a -lcurses"

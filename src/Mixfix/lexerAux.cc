@@ -35,7 +35,7 @@ bool fakeNewline = false;  // fake \n for files that don't end with \n
 bool fakeNewlineStack[MAX_IN_DEPTH];
 
 void
-getInput(char* buf, size_t& result, int max_size)
+getInput(char* buf, int& result, int max_size)
 {
   result = YY_NULL;
   if (UserLevelRewritingContext::interrupted())

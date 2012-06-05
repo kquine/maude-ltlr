@@ -27,7 +27,7 @@
 //extern int inStackPtr;
 //extern YY_BUFFER_STATE inStack[];
 
-void getInput(char* buf, size_t& result, int max_size);
+void getInput(char* buf, int& result, int max_size);
 void lexerIdMode();
 void lexerTokenTreeMode(int terminatingTokens);
 void lexerCmdMode();
