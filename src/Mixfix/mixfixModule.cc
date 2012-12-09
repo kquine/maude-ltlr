@@ -118,6 +118,8 @@
 #include "assignmentConditionFragment.hh"
 #include "rewriteConditionFragment.hh"
 
+// ltlr model checker
+#include "ContextHoleSymbol.hh"
 #include "ltlrFairnessCheckerSymbol.hh"
 
 //	object system class definitions

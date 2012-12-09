@@ -706,7 +706,8 @@ fmod TLR-CONTEXT-DECL-GENERATE is
  ceq holeDecl(M, R RS)
    = (sorts: ($ %CONTEXT%PREFIX%(TY))
       subsorts: (subsort TY < ($ %CONTEXT%PREFIX%(TY)) .)
-      ops: (op %HOLE%OP% : nil -> $ %CONTEXT%PREFIX%(TY) [ctor] .)
+      ops: (op %HOLE%OP% : nil -> $ %CONTEXT%PREFIX%(TY) 
+            [ctor special(id-hook('ContextHoleSymbol,TY))] .)
       eqs: none
       rls: none) 
    + holeDecl(M, RS)
@@ -822,7 +823,7 @@ fmod TLR-CONTEXT-MODULE-GENERATE is
        subsorts(DCL1) subsorts(DCL2)
        adjustSubsorts(M, %CONTEXT%PREFIX%, 
                       > %CONTEXT%PREFIX%{sorts(DCL1) ; sorts(DCL2)})
-       ops(DCL1) ops(DCL2) specialTLROp(opHooks('holeSymbol, ops(DCL1)))
+       ops(DCL1) ops(DCL2) --- specialTLROp(opHooks('holeSymbol, ops(DCL1)))
        none
        none
        none

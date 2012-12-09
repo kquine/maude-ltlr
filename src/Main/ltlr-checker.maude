@@ -21,9 +21,10 @@ fmod STATE-SUBSTITUTION is
 endfm
 
 fmod STATE-CONTEXT is
+  protecting SATISFACTION .
   sort StateContext .
   op noContext : -> StateContext [ctor] . 
-  op [] : -> StateContext [ctor] .  --- context (hole) symbol
+  op [] : -> StateContext [ctor special (id-hook ContextHoleSymbol (State))] .
 endfm
 
 fmod PROOF-TERM is

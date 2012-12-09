@@ -12,6 +12,7 @@
 //      forward declarations
 #include "interface.hh"
 #include "core.hh"
+#include "freeTheory.hh"
 #include "strategyLanguage.hh"
 #include "mixfix.hh"
 
@@ -29,13 +30,15 @@
 //		built in class definitions
 #include "bindingMacros.hh"
 
+#include "ContextHoleSymbol.hh"
+
 #include "ProofTermGenerator.hh"
 
 namespace ltlrModelChecker {
 
 ProofTermGenerator::ProofTermGenerator():
 		prooftermSymbol(NULL), substitutionSymbol(NULL), emptySubstSymbol(NULL), qidSymbol(NULL),
-		unlabeledSymbol(NULL), noContextSymbol(NULL), assignOp(NULL), init(false), mod(NULL) {}
+		unlabeledSymbol(NULL), noContextSymbol(NULL), assignOp(NULL), mod(NULL) {}
 
 DagNode*
 ProofTermGenerator::makeProofDag(const PositionState* ps, const Rule& rule, const Substitution* subst)
@@ -120,28 +123,6 @@ ProofTermGenerator::attachSymbol(const char* purpose, Symbol* symbol)
 	BIND_SYMBOL(purpose, symbol, noContextSymbol, Symbol*);
 	BIND_SYMBOL(purpose, symbol, assignOp, Symbol*);
 
-
-	initOps();
-
-    if (strcmp(purpose, "holeSymbol") == 0)
-    {
-    	if (symbol->arity() == 0)	// hole symbols have no arguments.
-    	{
-    		FOR_EACH_CONST(j, Vector<OpDeclaration>, symbol->getOpDeclarations())
-    		{
-    			Sort* i = j->getDomainAndRange()[0];
-    			FOR_EACH_CONST(k, NatSet, i->getLeqSorts())
-    			{
-    				int index = i->component()->sort(*k)->getIndexWithinModule();
-    				if (holeOps[index] == NULL)
-    					holeOps[index] = symbol;
-    			}
-    		}
-    		return true;
-    	}
-    	return false;
-    }
-
 	return false;
 }
 
@@ -164,15 +145,6 @@ ProofTermGenerator::copyAttachments(ProofTermGenerator* orig, SymbolMap* map)
 	COPY_SYMBOL(orig, assignOp, map, Symbol*);
 
 	COPY_TERM(orig, deadlockTerm, map);
-
-	initOps();
-
-	for (int j = 0; j < orig->holeOps.size(); ++j)
-	{
-		if (orig->holeOps[j] != NULL)
-			holeOps[j] = (map == NULL) ? orig->holeOps[j] : safeCast(Symbol*, map->translate(orig->holeOps[j]));
-	}
-
 }
 
 void
@@ -185,13 +157,6 @@ ProofTermGenerator::getSymbolAttachments(Vector<const char*>& purposes, Vector<S
 	APPEND_SYMBOL(purposes, symbols, unlabeledSymbol);
 	APPEND_SYMBOL(purposes, symbols, noContextSymbol);
 	APPEND_SYMBOL(purposes, symbols, assignOp);
-
-    FOR_EACH_CONST(j, Vector<Symbol*>, holeOps)
-    	if (*j != NULL)
-		{
-			purposes.append("holeSymbol");
-			symbols.append(*j);
-		}
 }
 
 void
@@ -224,17 +189,25 @@ ProofTermGenerator::findAssignOp(const Term* var) const
 }
 
 void
-ProofTermGenerator::initOps()
+ProofTermGenerator::init(MixfixModule* m)
 {
-	if ( !init )
+	this->mod = m;
+	int size = this->mod->getSorts().size();
+	holeOps.resize(size);
+	for (int i = 0; i < size; ++i)
 	{
-		int size = prooftermSymbol->getModule()->getSorts().size();
-		holeOps.expandTo(size);
-		for (int i = 0; i < size; ++i)
+		holeOps[i] = NULL;
+	}
+	FOR_EACH_CONST(j, Vector<Symbol*>, m->getSymbols())
+	{
+		if (ContextHoleSymbol* ch = dynamic_cast<ContextHoleSymbol*>(*j))
 		{
-			holeOps[i] = NULL;
+			FOR_EACH_CONST(k, NatSet, ch->getSortIndices())
+			{
+				if (holeOps[*k] == NULL)
+					holeOps[*k] = ch;
+			}
 		}
-		init = true;
 	}
 }
 

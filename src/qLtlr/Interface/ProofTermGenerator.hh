@@ -22,7 +22,7 @@ public:
 
     DagNode* makeProofDag(const PositionState* ps, const Rule& rule, const Substitution* subst);
     DagNode* makeDeadlockDag();
-    void setMixfixModule(MixfixModule* m);
+    void init(MixfixModule* m);
 
 protected:
     bool attachSymbol(const char* purpose, Symbol* symbol);
@@ -40,9 +40,6 @@ private:
     DagNode* makeAssignmentDag(const Term* variable, DagNode* value, Symbol* assignmentSymbol) const;
     Symbol* findAssignOp(const Term* var) const;
 
-    void initOps();
-
-    bool init;
     Symbol* assignOp;
     Vector<Symbol*> holeOps;
     MixfixModule* mod;
@@ -55,12 +52,6 @@ private:
     Symbol* noContextSymbol;
     CachedDag deadlockTerm;
 };
-
-inline void
-ProofTermGenerator::setMixfixModule(MixfixModule* m)
-{
-	this->mod = m;
-}
 
 }
 

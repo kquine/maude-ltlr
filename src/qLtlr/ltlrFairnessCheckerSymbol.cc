@@ -265,7 +265,7 @@ LTLRFairnessCheckerSymbol::eqRewrite(DagNode* subject, RewritingContext& context
     	sysGraph.reset(sys);
     	dagMap = sys;
     }
-    this->setMixfixModule(safeCast(MixfixModule*,this->getModule()));	// set module info to generate proof terms..
+    this->init(safeCast(MixfixModule*,this->getModule()));	// set module info to generate proof terms..
 
     //
     //        Do the model check

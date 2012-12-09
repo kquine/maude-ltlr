@@ -55,3 +55,4 @@
   MACRO(SocketManagerSymbol, SymbolType::SOCKET_MANAGER_SYMBOL)
   MACRO(InterpreterManagerSymbol, SymbolType::INTERPRETER_MANAGER_SYMBOL)
   MACRO(LTLRFairnessCheckerSymbol, SymbolType::LTLR_FAIRCHECKER_SYMBOL)
+  MACRO(ContextHoleSymbol, SymbolType::LTLR_CONTEXT_HOLE_SYMBOL)

@@ -58,11 +58,13 @@ libqLtlr_a_SOURCES = \
 	ModelChecker/SCCModelChecker.cc \
 	ModelChecker/SCCBuchiModelChecker.cc \
 	ModelChecker/StreettModelChecker.cc \
-	ltlrFairnessCheckerSymbol.cc
+	ContextHoleSymbol.cc \
+	ltlrFairnessCheckerSymbol.cc 
 
 	
 noinst_HEADERS = \
-	ltlrFairnessCheckerSymbol.hh
+	ContextHoleSymbol.hh \
+	ltlrFairnessCheckerSymbol.hh 
 
 
 
