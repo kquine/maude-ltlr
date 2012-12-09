@@ -9,14 +9,14 @@ load model-checker
 
 fmod STATE-SUBSTITUTION is
   protecting QID .
-  sorts StateAssignment .
-  --- assignment (_\_ Qid Value-> StateAssignItem) should defined.
+  sorts StateAssignment Value .
+  op _\_ : Qid Value -> StateAssignment [ctor poly(2)] .
 
   sorts StateSubstitution .
   subsorts StateAssignment < StateSubstitution .
-  op noSubstitution : -> StateSubstitution [ctor] .
+  op none : -> StateSubstitution [ctor] .
   op _;_ : StateSubstitution StateSubstitution -> StateSubstitution
-        [ctor comm assoc id: noSubstitution prec 65] .
+        [ctor comm assoc id: none prec 65] .
   eq A:StateAssignment ; A:StateAssignment = A:StateAssignment .
 endfm
 
@@ -172,8 +172,8 @@ fmod LTLR-COUNTEREXAMPLE is
      [ctor format (c! o c r c! o)] .
 
   eq {S, {noContext | R : SS}}     = {S, {R : SS}} .
-  eq {S, {R : noSubstitution}}     = {S, {R}} .
-  eq {S, {C | R : noSubstitution}} = {S, {C | R}} .
+  eq {S, {R : none}}     = {S, {R}} .
+  eq {S, {C | R : none}} = {S, {C | R}} .
   eq {S, {noContext | R}}          = {S, {R}} .
 endfm
 
@@ -231,7 +231,8 @@ fmod LTLR-MODEL-CHECKER is
 	   --- proofterm
            op-hook prooftermSymbol         ({_|_:_} : StateContext RuleName StateSubstitution ~> ProofTerm)
 	   op-hook substitutionSymbol      (_;_ : StateSubstitution StateSubstitution ~> StateSubstitution)
-	   op-hook emptySubstSymbol        (noSubstitution : ~> StateSubstitution)
+	   op-hook emptySubstSymbol        (none : ~> StateSubstitution)
+           op-hook assignOp                (_\_ : Qid Value ~> StateAssignment)
 	   op-hook qidSymbol               (<Qids> : ~> Qid)
 	   op-hook unlabeledSymbol         (unlabeled : ~> RuleName)
 	   op-hook noContextSymbol         (noContext : ~> StateContext)

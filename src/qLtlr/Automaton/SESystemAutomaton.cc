@@ -14,6 +14,8 @@
 #include "core.hh"
 #include "higher.hh"
 #include "freeTheory.hh"
+#include "strategyLanguage.hh"
+#include "mixfix.hh"
 
 #include "Interface/ProofTermGenerator.hh"
 #include "SESystemAutomaton.hh"

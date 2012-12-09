@@ -114,11 +114,6 @@ mod BRP-CHECK is
   subsort Conf < State .
 ---  subsorts Context$Conf < StateContext .   --- no context used
 
-  op _\_ : Qid Msg -> StateAssignment [ctor prec 63] .
-  op modelCheckParamFair : State Formula FairnessSet FairFlag ~> ModelCheckResult
-        [special (id-hook LTLRFairnessCheckerSymbol
-              op-hook assignmentSymbol (_\_ : Qid MsgL ~> StateAssignment))] .
-
   var M : Msg .  var C : StateContext .  var SS : StateSubstitution .
 
   ops req sok snok sdnk rfst rinc rok rnok : -> Action .

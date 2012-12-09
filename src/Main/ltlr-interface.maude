@@ -384,18 +384,20 @@ fmod TLR-PATTERN-DECL-GENERATE is
    = (sorts: none
       subsorts: none
       ops: (op top(T) : typeList(Vars(T)) -> %ACT%SORT% [ctor] .) 
-            assignOps(typeList(Vars(T))) 
+            --- assignOps(typeList(Vars(T))) 
       eqs: (eq %ACT%CHK%OP%[proofPattern(label(R),T),T] = 'true.Bool [none] .)
       rls: none)
    + patternDecl(TARS) .
   eq patternDecl(empty) = emptyResult .
 
 --- generating assignment operators
+---(
   op assignOps : TypeList -> OpDeclSet .
   eq assignOps(TY TYL) =
      (op %ASSIGN%OP% : 'Qid TY -> %ASSIGN%SORT% [ctor prec(63)] .) 
      assignOps(TYL) .
   eq assignOps(nil) = none .
+---)
 
 --- create meta proof term from pattern (but with label Q from a rule)
   op proofPattern : Qid Term ~> Term .
@@ -754,7 +756,7 @@ fmod TLR-BASIC-MODULE-GENERATE is
        including 'LTLR-MODEL-CHECKER .
        sorts none .
        none
-       ops(DCL1) ops(DCL2) specialTLROp(HL)
+       ops(DCL1) ops(DCL2) --- specialTLROp(HL)
        none
        eqs(DCL1) eqs(DCL2)
        none
@@ -762,8 +764,9 @@ fmod TLR-BASIC-MODULE-GENERATE is
    if IPR := intprtAttr(getRls(M)) 
    /\ EPS := enablePats(M,p1(IPR))
    /\ DCL1 := patternDecl(p1(IPR))
-   /\ DCL2 := enableEqDecl(EPS)
-   /\ HL := opHooks('assignmentSymbol,filterOpsByName(%ASSIGN%OP%,ops(DCL1))) .
+   /\ DCL2 := enableEqDecl(EPS) .
+
+---   /\ HL := opHooks('assignmentSymbol,filterOpsByName(%ASSIGN%OP%,ops(DCL1))) .
 endfm
 
 fmod TLR-FAIR-MODULE-GENERATE is

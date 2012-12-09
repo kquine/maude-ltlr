@@ -11,6 +11,8 @@
 //      forward declarations
 #include "interface.hh"
 #include "core.hh"
+#include "strategyLanguage.hh"
+#include "mixfix.hh"
 
 //      interface class definitions
 #include "symbol.hh"

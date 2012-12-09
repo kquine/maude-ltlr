@@ -9,6 +9,10 @@
 #include "macros.hh"
 #include "vector.hh"
 
+//		forward declarations
+#include "strategyLanguage.hh"
+#include "mixfix.hh"
+
 #include "natSet.hh"
 #include "CompositedFairnessMap.hh"
 

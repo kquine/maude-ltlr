@@ -12,6 +12,7 @@
 #include "quotedIdentifierSymbol.hh"
 #include "quotedIdentifierDagNode.hh"
 #include "cachedDag.hh"
+#include "mixfixModule.hh"
 
 namespace ltlrModelChecker {
 
@@ -21,6 +22,7 @@ public:
 
     DagNode* makeProofDag(const PositionState* ps, const Rule& rule, const Substitution* subst);
     DagNode* makeDeadlockDag();
+    void setMixfixModule(MixfixModule* m);
 
 protected:
     bool attachSymbol(const char* purpose, Symbol* symbol);
@@ -36,12 +38,14 @@ private:
     DagNode* makeRuleNameDag(int ruleId) const;
     DagNode* makeSubstitutionDag(const Substitution* substitution, const VariableInfo* variableInfoconst) const;
     DagNode* makeAssignmentDag(const Term* variable, DagNode* value, Symbol* assignmentSymbol) const;
+    Symbol* findAssignOp(const Term* var) const;
 
     void initOps();
 
     bool init;
-    Vector<Symbol*> assignOps;
+    Symbol* assignOp;
     Vector<Symbol*> holeOps;
+    MixfixModule* mod;
 
 	Symbol* prooftermSymbol;
     Symbol* substitutionSymbol;
@@ -51,6 +55,12 @@ private:
     Symbol* noContextSymbol;
     CachedDag deadlockTerm;
 };
+
+inline void
+ProofTermGenerator::setMixfixModule(MixfixModule* m)
+{
+	this->mod = m;
+}
 
 }
 

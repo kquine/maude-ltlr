@@ -68,20 +68,32 @@ load ltlr-interface
   pr SATISFACTION .
 
   subsort Conf < State .
-  subsorts Conf < Context$Conf < StateContext .  --- to use the context info
+  subsort Context$Conf < StateContext .
 
   op init : -> State .
   eq init = [a] [b,a,1,nil] [c,a,0,nil] . 
 
-  var CNT : Cnts .  vars C S I : Oid .  vars N : Nat . 
+  var CNT : Cnts .  var CF : Conf .
+  vars C S I : Oid .  vars N M : Nat .  var W : Nat? . 
 
   *** abstraction
   eq (I <- CNT) (I <- CNT) = (I <- CNT) .
   *** extra rules below added by coherence completion
   rl [reply] : (S <-{C,N}) [S] => (S <-{C,N}) [S] (C <-{S,f(S,C,N)}) .
+  rl [rec] : (C <- {S,M}) [C,S,N,W] => (C <- {S,M}) [C,S,N,M] .
+  rl [loss] : I <- CNT => I <- CNT .
+
+
+  ops proc-req received : Oid -> Prop .
+  eq (S <-{C,N}) CF |= proc-req(C) = true .
+  eq [C,S,N,M] CF |= received(C) = true .
 endm)
 
 set verbose on .
+
+(mc [a] [b,a,1,nil] |= [](proc-req(b) -> <> received(b)) .)
+(mc [a] [b,a,1,nil] |= [](~ proc-req(b)) -> [](~ received(b)) .)
+
 
 --- false. Note that the action pattern "rec" is defined by the rule attribute.
 (mc init |= <> rec .)

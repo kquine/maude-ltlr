@@ -12,6 +12,8 @@
 //      forward declarations
 #include "interface.hh"
 #include "core.hh"
+#include "strategyLanguage.hh"
+#include "mixfix.hh"
 
 //      interface class definitions
 #include "symbol.hh"
@@ -33,7 +35,7 @@ namespace ltlrModelChecker {
 
 ProofTermGenerator::ProofTermGenerator():
 		prooftermSymbol(NULL), substitutionSymbol(NULL), emptySubstSymbol(NULL), qidSymbol(NULL),
-		unlabeledSymbol(NULL), noContextSymbol(NULL), init(false) {}
+		unlabeledSymbol(NULL), noContextSymbol(NULL), assignOp(NULL), init(false), mod(NULL) {}
 
 DagNode*
 ProofTermGenerator::makeProofDag(const PositionState* ps, const Rule& rule, const Substitution* subst)
@@ -83,7 +85,8 @@ ProofTermGenerator::makeSubstitutionDag(const Substitution* substitution, const 
 			Vector<DagNode*> args;  // size may vary
 			for (int i = 0; i < nrVariable ; i++)
 			{
-				Symbol* assignSymbol = assignOps[variableInfo->index2Variable(i)->getSort()->getIndexWithinModule()];
+				Symbol* assignSymbol = findAssignOp(variableInfo->index2Variable(i));
+
 				if (assignSymbol != NULL)
 					args.append(makeAssignmentDag(variableInfo->index2Variable(i), substitution->value(i), assignSymbol));
 			}
@@ -115,28 +118,10 @@ ProofTermGenerator::attachSymbol(const char* purpose, Symbol* symbol)
 	BIND_SYMBOL(purpose, symbol, qidSymbol, QuotedIdentifierSymbol*);
 	BIND_SYMBOL(purpose, symbol, unlabeledSymbol, Symbol*);
 	BIND_SYMBOL(purpose, symbol, noContextSymbol, Symbol*);
+	BIND_SYMBOL(purpose, symbol, assignOp, Symbol*);
+
 
 	initOps();
-
-	if (strcmp(purpose, "assignmentSymbol") == 0)
-	{
-		if (symbol->arity() == 2)	// only 2 domain sorts
-		{
-			FOR_EACH_CONST(j, Vector<OpDeclaration>, symbol->getOpDeclarations())
-			{
-				Sort* i = j->getDomainAndRange()[1];
-				FOR_EACH_CONST(k, NatSet, i->getLeqSorts())
-				{
-					int index = i->component()->sort(*k)->getIndexWithinModule();
-					if (assignOps[index] == NULL)
-        				assignOps[index] = symbol;
-				}
-			}
-			return true;
-    	}
-
-		return false;
-	}
 
     if (strcmp(purpose, "holeSymbol") == 0)
     {
@@ -176,15 +161,11 @@ ProofTermGenerator::copyAttachments(ProofTermGenerator* orig, SymbolMap* map)
 	COPY_SYMBOL(orig, qidSymbol, map, QuotedIdentifierSymbol*);
 	COPY_SYMBOL(orig, unlabeledSymbol, map, Symbol*);
 	COPY_SYMBOL(orig, noContextSymbol, map, Symbol*);
+	COPY_SYMBOL(orig, assignOp, map, Symbol*);
+
 	COPY_TERM(orig, deadlockTerm, map);
 
 	initOps();
-
-	for (int i = 0; i < orig->assignOps.size(); ++i)
-	{
-		if (orig->assignOps[i] != NULL)
-			assignOps[i] = (map == NULL) ? orig->assignOps[i] : safeCast(Symbol*, map->translate(orig->assignOps[i]));
-	}
 
 	for (int j = 0; j < orig->holeOps.size(); ++j)
 	{
@@ -203,13 +184,7 @@ ProofTermGenerator::getSymbolAttachments(Vector<const char*>& purposes, Vector<S
 	APPEND_SYMBOL(purposes, symbols, qidSymbol);
 	APPEND_SYMBOL(purposes, symbols, unlabeledSymbol);
 	APPEND_SYMBOL(purposes, symbols, noContextSymbol);
-
-    FOR_EACH_CONST(i, Vector<Symbol*>, assignOps)
-    	if (*i != NULL)
-    	{
-			purposes.append("assignmentSymbol");
-			symbols.append(*i);
-    	}
+	APPEND_SYMBOL(purposes, symbols, assignOp);
 
     FOR_EACH_CONST(j, Vector<Symbol*>, holeOps)
     	if (*j != NULL)
@@ -237,17 +212,26 @@ ProofTermGenerator::reset()
     deadlockTerm.reset();  // so deadlock dag can be garbage collected
 }
 
+Symbol*
+ProofTermGenerator::findAssignOp(const Term* var) const
+{
+	// assignOp should have the form:  Qid Value -> Assignment..
+	static Vector<ConnectedComponent*> domainC(2);
+	domainC[0] = const_cast<ConnectedComponent*>(assignOp->domainComponent(0));
+	domainC[1] = var->getComponent();
+
+	return mod->findSymbol(assignOp->id(), domainC, assignOp->rangeComponent());
+}
+
 void
 ProofTermGenerator::initOps()
 {
 	if ( !init )
 	{
 		int size = prooftermSymbol->getModule()->getSorts().size();
-		assignOps.expandTo(size);
 		holeOps.expandTo(size);
 		for (int i = 0; i < size; ++i)
 		{
-			assignOps[i] = NULL;
 			holeOps[i] = NULL;
 		}
 		init = true;

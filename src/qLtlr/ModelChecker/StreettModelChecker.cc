@@ -12,6 +12,8 @@
 
 //      forward declarations
 #include "temporal.hh"
+#include "strategyLanguage.hh"
+#include "mixfix.hh"
 
 //      utility class definitions
 #include "natSet.hh"
