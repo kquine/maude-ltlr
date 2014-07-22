@@ -41,14 +41,10 @@ endm
 
 mod UNORDERED-CHANNEL-ABSTRACTION is
   including UNORDERED-CHANNEL .
-  vars M N P K : Nat .  vars L L' L'' : List .  var C : Conf .
-  eq [A1]: {L, M | [N, P] [N, P] C | L', K} = {L, M | [N, P] C | L', K} .
-endm
+  vars N M J K : Nat .      vars L P Q : List .  var  C : Conf .
 
-mod UNORDERED-CHANNEL-ABSTRACTION-2 is
-  extending UNORDERED-CHANNEL-ABSTRACTION .
-  vars M N P K : Nat .  vars L L' L'' : List .  var C : Conf .
-  rl [snd2]: {L, M | [N, K] C | L', K} => {L, M | [N, K] ack(K) C | L' @ N ; nil, s(K)} .
+  eq [A1]: {L, M | [N, J] [N, J] C | P, K} = {L, M | [N, J] C | P, K} .
+  rl [rec2]: {L, M | [N, J] C | P, J} => {L, M | [N, J] ack(J) C | P @ (N ; nil), s(J)} .
 endm
 
 load ltlr-checker
@@ -57,23 +53,23 @@ mod UNORDERED-CHANNEL-PREDS is
   protecting UNORDERED-CHANNEL .
   protecting SATISFACTION .
 
-  vars M N K P : Nat . vars L L' L'' : List . var  C : Conf . var  B : Bool . 
+  vars M N K P : Nat . vars L L1 L2 : List . var  C : Conf . var  B : Bool . 
 
   subsort ChannelState < State .
 
   ops prefix rec-q : List -> Prop .
-  eq {L', N | C | K ; L'', P} |= prefix(M ; L) 
-   = (M == K) and  ({L', N | C | L'', P} |=  prefix(L)) .
-  eq {L', N | C | nil, K} |=  prefix(L) = true .
-  eq {L', N | C | M ; L'', K} |=  prefix(nil) = false .
+  eq {L1, N | C | K ; L2, P} |= prefix(M ; L) 
+   = (M == K) and  ({L1, N | C | L2, P} |=  prefix(L)) .
+  eq {L1, N | C | nil, K} |=  prefix(L) = true .
+  eq {L1, N | C | M ; L2, K} |=  prefix(nil) = false .
 
-  eq {L', N | C | L'', K} |=  rec-q(L) = L == L'' .
+  eq {L1, N | C | L2, K} |=  rec-q(L) = L == L2 .
 endm
 
 load ltlr-interface
 
 (mod UNORDERED-CHANNEL-ABSTRACTION-CHECK is
-    extending UNORDERED-CHANNEL-ABSTRACTION-2 .
+    extending UNORDERED-CHANNEL-ABSTRACTION .
     including UNORDERED-CHANNEL-PREDS .
     extending LTLR-MODEL-CHECKER .
 
@@ -90,5 +86,9 @@ set verbose on .
 
 --- true
 (mc init |= <> rec-q(0 ; s(0) ; s(s(0)) ; nil) \/ (<>[] snd) .)
+
+
+(mc init |= <> rec-q(0 ; s(0) ; s(s(0)) ; nil) 
+ under (just : snd => False) .)
 
 

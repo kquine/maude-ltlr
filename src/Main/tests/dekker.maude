@@ -93,41 +93,41 @@ mod PARALLEL is inc SEQUENTIAL + TESTS .
     rl [user] : 
         {[I, U ; R] | S, M} 
       => 
-        {[I, R] | S, M}	    [metadata "exec(I)"] .
+        {[I, R] | S, M}	    [metadata "just[exec(I)]"] .
 
     rl [loop] : 
         {[I, L ; R] | S, M} 
       => 
-        {[I, L ; R] | S, M} [metadata "exec(I)"] .
+        {[I, L ; R] | S, M} [metadata "just[exec(I)]"] .
 
     rl [assign] : 
         {[I, (Q := E) ; R] | S, [Q, X?] M} 
       => 
-        {[I, R] | S, [Q,eval(E,[Q, X?] M)] M} [metadata "exec(I)"] .
+        {[I, R] | S, [Q,eval(E,[Q, X?] M)] M} [metadata "just[exec(I)]"] .
 
    crl [assign] : 
         {[I, (Q := E) ; R] | S, M} 
       => 
         {[I, R] | S, [Q,eval(E,M)] M} 
-     if Q in M =/= true [metadata "exec(I)"] .
+     if Q in M =/= true [metadata "just[exec(I)]"] .
 
     rl [if] : 
         {[I, if T then P fi ; R] | S, M} 
       =>
         {[I, if eval(T, M) then P else skip fi ; R] | S, M} 
-     [metadata "exec(I)"] .
+     [metadata "just[exec(I)]"] .
 
     rl [while] : 
         {[I, while T do P od ; R] | S, M} 
       =>
         {[I, if eval(T,M) then (P ; while T do P od) else skip fi ; R] | S, M} 
-     [metadata "exec(I)"] .
+     [metadata "just[exec(I)]"] .
 
     rl [repeat] : 
         {[I, repeat P forever ; R] | S, M} 
       =>
         {[I, P ; repeat P forever ; R] | S, M} 
-     [metadata "exec(I)"] .
+     [metadata "just[exec(I)]"] .
 endm
 
 --- Dekker's algorithm
@@ -232,5 +232,12 @@ set verbose on .
     []<> ~ in-rem(1) -> ([]<> exec(1) -> []<> in-crit(1))
  under
     (just : enabled(exec(2)) => exec(2))
+.)
+
+(pfmc initial |= []<> ~ in-rem(1) -> []<> in-crit(1) .)
+
+(pfmc initial |= 
+    ([]<> ~ in-rem(1) -> []<> in-crit(1)) /\
+    ([]<> ~ in-rem(2) -> []<> in-crit(2)) 
 .)
 

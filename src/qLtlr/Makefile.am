@@ -34,6 +34,7 @@ libqLtlr_a_SOURCES = \
 	Interface/PropLabelChecker.cc \
 	Interface/ProofTermGenerator.cc \
 	Interface/CounterExampleGenerator.cc \
+	Interface/DefinablePropGenerator.cc \
 	SearchGraph/DagTransitionGraph.cc \
 	SearchGraph/stateTransitionGraph.cc \
 	SearchGraph/seStateTransitionGraph.cc \

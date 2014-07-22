@@ -46,7 +46,7 @@ load ltlr-interface
 
   crl [join]: < P, N, ph(N, think, 0) ; CF > 
            => < P, s N, ph(N, think, 0) ; CF ; ph(s N, think, 0) ; stk(s N) > 
-   if P rem N == 0 .
+   if (N rem 3 == 0) or (P rem (4 * N) == 0) .
 
   rl [leave]: < P, s s s N, CF ; ph(s s s N, think, 0) ; stk(s s s N) > 
            => < P, s s N, CF > .
@@ -56,7 +56,7 @@ endm)
 --- and extra state predicates.
 
 (mod PHILO-CHECK is
-  pr LTLR-MODEL-CHECKER .
+  pr SATISFACTION .
   inc PHILO .
 ---  inc CONTEXT[PHILO] . --- for context
 
@@ -70,12 +70,21 @@ endm)
 
   op eating : Nat -> Prop [ctor] .
   eq < P, N, ph(I, hungry, 2) ; CF > |= eating(I) = true .
+
+  op num : Top -> Nat .
+  eq num(< P, N, CF >) = N .
 endm)
 
 set verbose on .
 
-(mc in PHILO-CHECK : init(5) |= [] ~ deadlock .)
+
+(mc in PHILO-CHECK : init(871) |= [] ~ deadlock -> <> eating(1) .)
+
+(mc in PHILO-CHECK : init(871) |= [] ~ deadlock -> <> eating(1) 
+ under (just : enabled(wake(1)) => wake(1)) ;
+       (fair : enabled(grab(1)) => grab(1))
+.)
 
 (pfmc init(6) |= [] ~ deadlock -> <> eating(1) .)
-(pfmc init(12) |= [] ~ deadlock -> <> eating(1) .)
+(pfmc init(871) |= [] ~ deadlock -> <> eating(1) .)
 

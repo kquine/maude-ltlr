@@ -752,7 +752,8 @@ fmod TLR-BASIC-MODULE-GENERATE is
 
   op basicPatternMod : Module ~> Module .
  ceq basicPatternMod(M)
-   = addDecls(mod ACTION[getName(M)] is
+   = (mod ACTION[getName(M)] is
+       including getName(M) .
        including 'EXT-BOOL .
        including 'LTLR-MODEL-CHECKER .
        sorts none .
@@ -761,7 +762,7 @@ fmod TLR-BASIC-MODULE-GENERATE is
        none
        eqs(DCL1) eqs(DCL2)
        none
-     endm, M)
+     endm)
    if IPR := intprtAttr(getRls(M)) 
    /\ EPS := enablePats(M,p1(IPR))
    /\ DCL1 := patternDecl(p1(IPR))

@@ -7,11 +7,14 @@
 
 load model-checker
 
-fmod STATE-SUBSTITUTION is
+fmod STATE-ASSIGNMENT is
   protecting QID .
-  sorts StateAssignment Value .
-  op _\_ : Qid Value -> StateAssignment [ctor poly(2)] .
+  sorts StateAssignment .
+  op _\_ : Qid Universal -> StateAssignment [ctor poly(2)] .
+endfm
 
+fmod STATE-SUBSTITUTION is
+  including STATE-ASSIGNMENT .
   sorts StateSubstitution .
   subsorts StateAssignment < StateSubstitution .
   op none : -> StateSubstitution [ctor] .
@@ -21,7 +24,7 @@ fmod STATE-SUBSTITUTION is
 endfm
 
 fmod STATE-CONTEXT is
-  protecting SATISFACTION .
+  including SATISFACTION .
   sort StateContext .
   op noContext : -> StateContext [ctor] . 
   op [] : -> StateContext [ctor special (id-hook ContextHoleSymbol (State))] .
@@ -200,6 +203,8 @@ fmod LTLR-MODEL-CHECKER is
   subsorts Prop Action < Formula .
   subsort State < StateContext .
 
+  sort ##Dummy## . --- a dummy sort for a polymorphic operator..
+
 --- model checker
 
   --- default model checker with no fairness
@@ -233,7 +238,7 @@ fmod LTLR-MODEL-CHECKER is
            op-hook prooftermSymbol         ({_|_:_} : StateContext RuleName StateSubstitution ~> ProofTerm)
 	   op-hook substitutionSymbol      (_;_ : StateSubstitution StateSubstitution ~> StateSubstitution)
 	   op-hook emptySubstSymbol        (none : ~> StateSubstitution)
-           op-hook assignOp                (_\_ : Qid Value ~> StateAssignment)
+           op-hook assignOp                (_\_ : Qid ##Dummy## ~> StateAssignment)
 	   op-hook qidSymbol               (<Qids> : ~> Qid)
 	   op-hook unlabeledSymbol         (unlabeled : ~> RuleName)
 	   op-hook noContextSymbol         (noContext : ~> StateContext)

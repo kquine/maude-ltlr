@@ -4,24 +4,22 @@
 
 mod CLIENT-SERVER is
     protecting NAT .
-    sorts Oid Nat? Cnts Conf .
+    sorts Oid Nat? Conf .
     subsort Nat < Nat? .
-    subsort Cnts < Conf .
 
     op nil : -> Nat? [ctor] .
     ops a b c : -> Oid [ctor] .
     op f : Oid Oid Nat -> Nat [ctor] .
-    op `{_`,_`} : Oid Nat -> Cnts [ctor] .
 
-    op _<-_ : Oid Cnts -> Conf [ctor] .
+    op _<-`{_`,_`} : Oid Oid Nat -> Conf [ctor] .
     op `[_`] : Oid -> Conf [ctor] .
     op `[_`,_`,_`,_`] : Oid Oid Nat Nat? -> Conf [ctor] .
 
     op null : -> Conf [ctor] .
     op __ : Conf Conf -> Conf [ctor assoc comm id: null] .
 
-    vars C S I : Oid .  vars N M : Nat .
-    var W : Nat? .  var CNT : Cnts . 
+    vars C S I J : Oid .  vars N M : Nat .
+    var W : Nat? .  
 
     --- The followings are the rewriting rules to describe the behaviour
     --- of this system. The localized fairness for this model is specified
@@ -37,10 +35,24 @@ mod CLIENT-SERVER is
 
     --- strong fairness localized to the variable C. In addition,
     --- the item "rec" is specified to use the action of the form "rec".
-    rl [rec] : (C <- {S,M}) [C,S,N,W] => [C,S,N,M] [metadata "rec; fair(C)"] .
+    rl [rec] : (C <- {S,M}) [C,S,N,W] => [C,S,N,M] [metadata "receive; fair(C)"] .
 
-    rl [dupl] : (I <- CNT) => (I <- CNT) (I <- CNT)  .
-    rl [loss] : I <- CNT => null  .
+    rl [dupl] : (I <- {J,M}) => (I <- {J,M}) (I <- {J,M})  .
+    rl [loss] : I <- {J,M} => null  .
+endm
+
+mod CLIENT-SERVER-ABS is
+  pr CLIENT-SERVER .
+
+  var CF : Conf .
+  vars C S I J : Oid .  vars N M : Nat .  var W : Nat? . 
+  *** abstraction
+  eq (I <- {J,M}) (I <- {J,M}) = (I <- {J,M}) .
+  *** extra rules below added by coherence completion
+  rl [reply] : (S <-{C,N}) [S] => (S <-{C,N}) [S] (C <-{S,f(S,C,N)}) .
+  rl [rec] : (C <- {S,M}) [C,S,N,W] => (C <- {S,M}) [C,S,N,M] .
+  rl [loss] : I <- {J,M} => I <- {J,M} .
+
 endm
 
 ---(
@@ -61,45 +73,46 @@ After then, we can freely define extra state/event propositions.
 ---)
 
 --- Full-Maude interface for LTLR model checknig under parameterized fairness
-load ltlr-interface
+load ltlr-interface2
 
 (mod CLIENT-SERVER-CHECK is
-  inc CONTEXT[CLIENT-SERVER] .  --- to use the context info
-  pr SATISFACTION .
+  inc CLIENT-SERVER-ABS . 
+  pr LTLR-MODEL-CHECKER .
 
   subsort Conf < State .
-  subsort Context$Conf < StateContext .
 
   op init : -> State .
   eq init = [a] [b,a,1,nil] [c,a,0,nil] . 
 
-  var CNT : Cnts .  var CF : Conf .
-  vars C S I : Oid .  vars N M : Nat .  var W : Nat? . 
+  var CF : Conf .
+  vars C S I J : Oid .  vars N M : Nat .  var W : Nat? . 
 
-  *** abstraction
-  eq (I <- CNT) (I <- CNT) = (I <- CNT) .
-  *** extra rules below added by coherence completion
-  rl [reply] : (S <-{C,N}) [S] => (S <-{C,N}) [S] (C <-{S,f(S,C,N)}) .
-  rl [rec] : (C <- {S,M}) [C,S,N,W] => (C <- {S,M}) [C,S,N,M] .
-  rl [loss] : I <- CNT => I <- CNT .
+  op req : Oid -> Action [ctor] .
+  var C : Oid .    var CXT : StateContext .    var SUBST : StateSubstitution .
+  eq {CXT | 'req : 'C \ C ; SUBST} |= req(C) = true .
 
-
-  ops proc-req received : Oid -> Prop .
+  ops proc-req answered : Oid -> Prop .
   eq (S <-{C,N}) CF |= proc-req(C) = true .
-  eq [C,S,N,M] CF |= received(C) = true .
+  eq [C,S,N,M] CF |= answered(C) = true .
 endm)
 
 set verbose on .
 
-(mc [a] [b,a,1,nil] |= [](proc-req(b) -> <> received(b)) .)
-(mc [a] [b,a,1,nil] |= [](~ proc-req(b)) -> [](~ received(b)) .)
+(mc [a] [b,a,1,nil] |= [](proc-req(b) -> <> answered(b)) .)
+(mc [a] [b,a,1,nil] |= [](~ proc-req(b)) -> [](~ answered(b)) .)
 
 
 --- false. Note that the action pattern "rec" is defined by the rule attribute.
-(mc init |= <> rec .)
+(mc init |= [](req(b) -> <> answered(b)) .)
+(mc init |= <> receive .)
+
+
+(pfmc init |= [](req(b) -> <> answered(b)) .)
+
+(pfmc init |= <> receive .)
 
 --- false. (only for ground weak fairness)
-(mc init |= <> rec under
+(mc init |= <> receive under
     (just : enabled(req(b)) => req(b)) ;
     (just : enabled(req(c)) => req(c)) ;
     (just : enabled(reply(a,b)) => reply(a,b)) ;
@@ -109,12 +122,27 @@ set verbose on .
 .)
 
 --- true. (ground weak and strong fairness)
-(mc init |= <> rec under
+(mc init |= <> receive under
     (just : enabled(req(b)) => req(b)) ;
-    (fair : enabled(reply(a,b)) => reply(a,b)) ;
-    (fair : enabled(rec(b)) => rec(b))
+    (fair : enabled(rec(b)) => rec(b)) ;
+    (fair : enabled(reply(a,b)) => reply(a,b))
 .)
 
---- true. (under strong/weak localized fairness)
-(pfmc init |= <> rec .)
+eof
 
+--- true. (under strong/weak localized fairness)
+(pfmc init |= <> receive .)
+
+(mod CLIENT-SERVER-CHECK-CONTEXT is
+  inc CONTEXT[CLIENT-SERVER] .
+  inc CLIENT-SERVER-ABS .
+
+  subsort Conf < State .
+  subsort Context$Conf < StateContext .
+
+  op init : -> State .
+  eq init = [a] [b,a,1,nil] [c,a,0,nil] . 
+endm)
+
+(mc init |= <> receive .)
+(pfmc init |= <> receive .)
